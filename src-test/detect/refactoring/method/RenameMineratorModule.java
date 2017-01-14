@@ -27,7 +27,11 @@ public class RenameMineratorModule {
 		
 		GitService gitService = new GitServiceImpl();
 		GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
+<<<<<<< HEAD
         File historicProject = new File("E:\\Projetos_Clip\\Method_Metrics\\Historic_Methods\\CSV_HISTORIC_V2\\RESULTS_RENAME_METHOD\\PainelAdmin_RenameHistoric.txt");
+=======
+        File historicProject = new File("C:\\Users\\Ana Carla\\Google Drive\\Clip_Projects\\Historic_Methods\\MeyerControl_RenameHistoric.txt");
+>>>>>>> a57d1c67fc201b81a4d0601ef782d467b016e3c2
 		
         if (!historicProject.exists()) {
 			historicProject.createNewFile();
@@ -39,7 +43,13 @@ public class RenameMineratorModule {
         Repository repo;
         
 		try {
+<<<<<<< HEAD
 			repo = gitService.openRepository("E:\\Projetos_Clip\\Projects\\clip-admin-panel-v2");
+=======
+			repo = gitService.cloneIfNotExists(
+			    "E:\\Projetos_Clip\\meyer-control",
+			    "https://gitlab.com//clip-dev//meyer-control.git");
+>>>>>>> a57d1c67fc201b81a4d0601ef782d467b016e3c2
 			     miner.detectAll(repo, "master", new RefactoringHandler() {
 			
 				  public void handle(RevCommit commitData, List<Refactoring> refactorings) {
