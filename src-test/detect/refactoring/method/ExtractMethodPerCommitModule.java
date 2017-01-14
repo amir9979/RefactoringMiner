@@ -45,7 +45,7 @@ public static void main(String[] args) throws IOException {
 							
 							
 							String historicRefactoring = ref.toString();
-							if(historicRefactoring != null && historicRefactoring.contains("Extract Method")){
+							if(historicRefactoring != null){
 								historicList.add("Commit:"+ commitData.getId().getName());
 								historicList.add(historicRefactoring);
 							}
