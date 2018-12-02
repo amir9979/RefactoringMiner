@@ -4,6 +4,7 @@ import gr.uom.java.xmi.UMLClass;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringType;
@@ -24,6 +25,24 @@ public class ExtractSuperclassRefactoring implements Refactoring {
 		sb.append(" from classes ");
 		sb.append(subclassSet);
 		return sb.toString();
+	}
+
+	@Override
+	public String getProcessedClassName() {
+		StringJoiner joiner = new StringJoiner(",");
+		for(UMLClass umlClass : this.subclassSet) {
+			joiner.add(umlClass.getName());
+		}
+		return joiner.toString();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		StringJoiner joiner = new StringJoiner(",");
+		for(UMLClass umlClass : this.subclassSet) {
+			joiner.add(umlClass.getSourceFile());
+		}
+		return joiner.toString();
 	}
 
 	public String getName() {

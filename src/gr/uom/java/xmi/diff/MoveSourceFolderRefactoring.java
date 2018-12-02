@@ -44,6 +44,16 @@ public class MoveSourceFolderRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	@Override
+	public String getProcessedClassName() {
+		return "N/A";
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return pattern.getBefore().endsWith("/") ? pattern.getBefore().substring(0, pattern.getBefore().length()-1) : pattern.getBefore();
+	}
+
 	public String getName() {
 		return this.getRefactoringType().getDisplayName();
 	}

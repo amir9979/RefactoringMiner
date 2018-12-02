@@ -301,6 +301,20 @@ public class RefactoringMiner {
         builder.append(ref.getName());
         builder.append(";");
         builder.append(ref);
+        builder.append(";");
+        builder.append(ref.getProcessedFilePath());
+        builder.append(";");
+        builder.append(ref.getProcessedClassName());
+        return builder.toString();
+    }
+
+    private static String getResultRefactoringDescription(String commitId, Refactoring ref) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(commitId);
+        builder.append(";");
+        builder.append(ref.getName());
+        builder.append(";");
+        builder.append(ref);
         return builder.toString();
     }
 

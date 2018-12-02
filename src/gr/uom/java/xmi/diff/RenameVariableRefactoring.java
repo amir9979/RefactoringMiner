@@ -66,6 +66,16 @@ public class RenameVariableRefactoring implements Refactoring {
 	}
 
 	@Override
+	public String getProcessedClassName() {
+		return operationAfter.getClassName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return originalVariable.getLocationInfo().getFilePath();
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

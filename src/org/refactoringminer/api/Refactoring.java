@@ -12,7 +12,5 @@ public interface Refactoring extends Serializable {
 
 	public String getProcessedClassName();
 
-	public String getProcessedElementFQName();
-
 	public String getProcessedFilePath();
 }

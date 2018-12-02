@@ -26,6 +26,14 @@ public class MoveAttributeRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	public String getProcessedClassName() {
+		return getSourceClassName();
+	}
+
+	public String getProcessedFilePath() {
+		return originalAttribute.getLocationInfo().getFilePath();
+	}
+
 	public String getName() {
 		return this.getRefactoringType().getDisplayName();
 	}

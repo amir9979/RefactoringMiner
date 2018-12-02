@@ -24,12 +24,12 @@ public class ConvertAnonymousClassToTypeRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
-	public String getProcessedFilePath(){
+    public String getProcessedFilePath(){
 		return anonymousClass.getSourceFile();
 	}
 
-	public String String getProcessedClassName(){
-		return anonymousClass
+	public String getProcessedClassName(){
+		return anonymousClass.getName();
 	}
 
 	public String getName() {

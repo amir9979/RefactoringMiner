@@ -52,4 +52,14 @@ public class RenamePackageRefactoring implements Refactoring {
 		sb.append(movedPath);
 		return sb.toString();
 	}
+
+	@Override
+	public String getProcessedClassName() {
+		return "N/A";
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return pattern.getBefore().endsWith(".") ? pattern.getBefore().substring(0, pattern.getBefore().length()-1) : pattern.getBefore();
+	}
 }

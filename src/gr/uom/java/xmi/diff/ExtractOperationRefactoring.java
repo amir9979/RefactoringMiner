@@ -62,6 +62,16 @@ public class ExtractOperationRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	@Override
+	public String getProcessedClassName() {
+		return getClassName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return sourceOperationBeforeExtraction.getLocationInfo().getFilePath();
+	}
+
 	private String getClassName() {
 		String sourceClassName = getSourceOperationBeforeExtraction().getClassName();
 		String targetClassName = getSourceOperationAfterExtraction().getClassName();
