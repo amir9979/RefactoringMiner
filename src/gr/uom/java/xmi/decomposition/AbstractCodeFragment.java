@@ -41,8 +41,11 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
 	public abstract List<String> getAnonymousClassDeclarations();
 	public abstract List<String> getStringLiterals();
 	public abstract List<String> getNumberLiterals();
+	public abstract List<String> getBooleanLiterals();
+	public abstract List<String> getTypeLiterals();
 	public abstract Map<String, ObjectCreation> getCreationMap();
 	public abstract List<String> getInfixOperators();
+	public abstract List<String> getArguments();
 	public abstract VariableDeclaration searchVariableDeclaration(String variableName);
 	public abstract VariableDeclaration getVariableDeclaration(String variableName);
 	
@@ -161,6 +164,10 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
 			}
 			else if(("throw " + objectCreation + ";\n").equals(statement)) {
 				creation.coverage = StatementCoverageType.THROW_CALL;
+				return creation;
+			}
+			else if(expressionIsTheInitializerOfVariableDeclaration(objectCreation)) {
+				creation.coverage = StatementCoverageType.VARIABLE_DECLARATION_INITIALIZER_CALL;
 				return creation;
 			}
 		}

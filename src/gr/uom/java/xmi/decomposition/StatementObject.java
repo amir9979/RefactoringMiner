@@ -28,8 +28,11 @@ public class StatementObject extends AbstractStatement {
 	private List<String> anonymousClassDeclarations;
 	private List<String> stringLiterals;
 	private List<String> numberLiterals;
+	private List<String> booleanLiterals;
+	private List<String> typeLiterals;
 	private Map<String, ObjectCreation> creationMap;
 	private List<String> infixOperators;
+	private List<String> arguments;
 	
 	public StatementObject(CompilationUnit cu, String filePath, Statement statement, int depth) {
 		super();
@@ -43,8 +46,11 @@ public class StatementObject extends AbstractStatement {
 		this.anonymousClassDeclarations = visitor.getAnonymousClassDeclarations();
 		this.stringLiterals = visitor.getStringLiterals();
 		this.numberLiterals = visitor.getNumberLiterals();
+		this.booleanLiterals = visitor.getBooleanLiterals();
+		this.typeLiterals = visitor.getTypeLiterals();
 		this.creationMap = visitor.getCreationMap();
 		this.infixOperators = visitor.getInfixOperators();
+		this.arguments = visitor.getArguments();
 		setDepth(depth);
 		if(Visitor.METHOD_INVOCATION_PATTERN.matcher(statement.toString()).matches()) {
 			if(statement instanceof VariableDeclarationStatement) {
@@ -164,6 +170,16 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
+	public List<String> getBooleanLiterals() {
+		return booleanLiterals;
+	}
+
+	@Override
+	public List<String> getTypeLiterals() {
+		return typeLiterals;
+	}
+
+	@Override
 	public Map<String, ObjectCreation> getCreationMap() {
 		return creationMap;
 	}
@@ -171,6 +187,11 @@ public class StatementObject extends AbstractStatement {
 	@Override
 	public List<String> getInfixOperators() {
 		return infixOperators;
+	}
+
+	@Override
+	public List<String> getArguments() {
+		return arguments;
 	}
 
 	@Override

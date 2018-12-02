@@ -8,8 +8,10 @@ import java.util.regex.Pattern;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ArrayType;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -30,11 +32,13 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.ThisExpression;
+import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.WildcardType;
 
 public class Visitor extends ASTVisitor {
 	public static final Pattern METHOD_INVOCATION_PATTERN = Pattern.compile("!(\\w|\\.)*@\\w*");
+	public static final Pattern METHOD_SIGNATURE_PATTERN = Pattern.compile("(public|protected|private|static|\\s) +[\\w\\<\\>\\[\\]]+\\s+(\\w+) *\\([^\\)]*\\) *(\\{?|[^;])");
 	private CompilationUnit cu;
 	private String filePath;
 	private List<String> allIdentifiers = new ArrayList<String>();
@@ -45,8 +49,11 @@ public class Visitor extends ASTVisitor {
 	private List<String> anonymousClassDeclarations = new ArrayList<String>();
 	private List<String> stringLiterals = new ArrayList<String>();
 	private List<String> numberLiterals = new ArrayList<String>();
+	private List<String> booleanLiterals = new ArrayList<String>();
+	private List<String> typeLiterals = new ArrayList<String>();
 	private Map<String, ObjectCreation> creationMap = new LinkedHashMap<String, ObjectCreation>();
 	private List<String> infixOperators = new ArrayList<String>();
+	private List<String> arguments = new ArrayList<String>();
 
 	public Visitor(CompilationUnit cu, String filePath) {
 		this.cu = cu;
@@ -59,6 +66,10 @@ public class Visitor extends ASTVisitor {
 	}
 
 	public boolean visit(ClassInstanceCreation node) {
+		List<Expression> arguments = node.arguments();
+		for(Expression argument : arguments) {
+			processArgument(argument);
+		}
 		creationMap.put(node.toString(), new ObjectCreation(cu, filePath, node));
 		return super.visit(node);
 	}
@@ -91,6 +102,16 @@ public class Visitor extends ASTVisitor {
 
 	public boolean visit(NumberLiteral node) {
 		numberLiterals.add(node.toString());
+		return super.visit(node);
+	}
+
+	public boolean visit(BooleanLiteral node) {
+		booleanLiterals.add(node.toString());
+		return super.visit(node);
+	}
+
+	public boolean visit(TypeLiteral node) {
+		typeLiterals.add(node.toString());
 		return super.visit(node);
 	}
 
@@ -145,6 +166,10 @@ public class Visitor extends ASTVisitor {
 	
 	public boolean visit(MethodInvocation node) {
 		invokedMethodNames.add(node.getName().getIdentifier());
+		List<Expression> arguments = node.arguments();
+		for(Expression argument : arguments) {
+			processArgument(argument);
+		}
 		String methodInvocation = null;
 		if(METHOD_INVOCATION_PATTERN.matcher(node.toString()).matches()) {
 			methodInvocation = processMethodInvocation(node);
@@ -196,8 +221,24 @@ public class Visitor extends ASTVisitor {
 	
 	public boolean visit(SuperMethodInvocation node) {
 		invokedMethodNames.add(node.getName().getIdentifier());
+		List<Expression> arguments = node.arguments();
+		for(Expression argument : arguments) {
+			processArgument(argument);
+		}
 		methodInvocationMap.put(node.toString(), new OperationInvocation(cu, filePath, node));
 		return super.visit(node);
+	}
+
+	private void processArgument(Expression argument) {
+		if(argument instanceof SuperMethodInvocation ||
+				argument instanceof Name ||
+				argument instanceof StringLiteral ||
+				argument instanceof BooleanLiteral ||
+				(argument instanceof FieldAccess && ((FieldAccess)argument).getExpression() instanceof ThisExpression) ||
+				(argument instanceof ArrayAccess && invalidArrayAccess((ArrayAccess)argument)) ||
+				(argument instanceof InfixExpression && invalidInfix((InfixExpression)argument)))
+			return;
+		this.arguments.add(argument.toString());
 	}
 
 	public boolean visit(QualifiedName node) {
@@ -243,6 +284,14 @@ public class Visitor extends ASTVisitor {
 		return numberLiterals;
 	}
 
+	public List<String> getBooleanLiterals() {
+		return booleanLiterals;
+	}
+
+	public List<String> getTypeLiterals() {
+		return typeLiterals;
+	}
+
 	public Map<String, ObjectCreation> getCreationMap() {
 		return creationMap;
 	}
@@ -251,10 +300,26 @@ public class Visitor extends ASTVisitor {
 		return infixOperators;
 	}
 
+	public List<String> getArguments() {
+		return this.arguments;
+	}
+
 	public List<String> getVariables() {
 		List<String> variables = new ArrayList<String>(this.allIdentifiers);
 		variables.removeAll(this.invokedMethodNames);
 		variables.removeAll(this.types);
 		return variables;
+	}
+
+	private static boolean invalidArrayAccess(ArrayAccess e) {
+		return e.getArray() instanceof SimpleName && simpleNameOrNumberLiteral(e.getIndex());
+	}
+
+	private static boolean invalidInfix(InfixExpression e) {
+		return simpleNameOrNumberLiteral(e.getLeftOperand()) && simpleNameOrNumberLiteral(e.getRightOperand());
+	}
+
+	private static boolean simpleNameOrNumberLiteral(Expression e) {
+		return e instanceof SimpleName || e instanceof NumberLiteral;
 	}
 }
