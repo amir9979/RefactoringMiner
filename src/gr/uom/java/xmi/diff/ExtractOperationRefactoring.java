@@ -1,6 +1,8 @@
 package gr.uom.java.xmi.diff;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.refactoringminer.api.Refactoring;
@@ -21,8 +23,10 @@ public class ExtractOperationRefactoring implements Refactoring {
 	private Set<Replacement> replacements;
 	private Set<AbstractCodeFragment> extractedCodeFragmentsFromSourceOperation;
 	private Set<AbstractCodeFragment> extractedCodeFragmentsToExtractedOperation;
+	private UMLOperationBodyMapper bodyMapper;
 
 	public ExtractOperationRefactoring(UMLOperationBodyMapper bodyMapper, UMLOperation sourceOperationAfterExtraction, OperationInvocation operationInvocation) {
+		this.bodyMapper = bodyMapper;
 		this.extractedOperation = bodyMapper.getOperation2();
 		this.sourceOperationBeforeExtraction = bodyMapper.getOperation1();
 		this.sourceOperationAfterExtraction = sourceOperationAfterExtraction;
@@ -38,6 +42,7 @@ public class ExtractOperationRefactoring implements Refactoring {
 
 	public ExtractOperationRefactoring(UMLOperationBodyMapper bodyMapper, UMLOperation extractedOperation,
 			UMLOperation sourceOperationBeforeExtraction, UMLOperation sourceOperationAfterExtraction, OperationInvocation operationInvocation) {
+		this.bodyMapper = bodyMapper;
 		this.extractedOperation = extractedOperation;
 		this.sourceOperationBeforeExtraction = sourceOperationBeforeExtraction;
 		this.sourceOperationAfterExtraction = sourceOperationAfterExtraction;
@@ -76,6 +81,10 @@ public class ExtractOperationRefactoring implements Refactoring {
 		String sourceClassName = getSourceOperationBeforeExtraction().getClassName();
 		String targetClassName = getSourceOperationAfterExtraction().getClassName();
 		return sourceClassName.equals(targetClassName) ? sourceClassName : targetClassName;
+	}
+
+	public UMLOperationBodyMapper getBodyMapper() {
+		return bodyMapper;
 	}
 
 	public UMLOperation getExtractedOperation() {
@@ -154,5 +163,17 @@ public class ExtractOperationRefactoring implements Refactoring {
 
 	public RefactoringType getRefactoringType() {
 		return RefactoringType.EXTRACT_OPERATION;
+	}
+
+	public List<String> getInvolvedClassesBeforeRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		classNames.add(getSourceOperationBeforeExtraction().getClassName());
+		return classNames;
+	}
+
+	public List<String> getInvolvedClassesAfterRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		classNames.add(getSourceOperationAfterExtraction().getClassName());
+		return classNames;
 	}
 }

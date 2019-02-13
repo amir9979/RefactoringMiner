@@ -148,6 +148,10 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 		this.operationBody = body;
 	}
 
+	public String getNonQualifiedClassName() {
+		return className.contains(".") ? className.substring(className.lastIndexOf(".")+1, className.length()) : className;
+	}
+
 	public String getClassName() {
 		return className;
 	}
@@ -192,7 +196,7 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 	}
 
 	public boolean equalSignature(UMLOperation operation) {
-		return this.name.equals(operation.name) &&	this.parameters.equals(operation.parameters);
+		return this.name.equals(operation.name) &&	this.getParameterTypeList().equals(operation.getParameterTypeList()) && equalReturnParameter(operation);
 	}
 
 	public boolean equalSignatureIgnoringOperationName(UMLOperation operation) {
@@ -204,14 +208,14 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 	}
 
 	public boolean equalSignatureIgnoringChangedTypes(UMLOperation operation) {
-		if(!(this.isConstructor && operation.isConstructor || this.name.equals(operation.name)))
+		if(!(this.isConstructor && operation.isConstructor || equivalentName(operation)))
 			return false;
 		if(this.isAbstract != operation.isAbstract)
 			return false;
-		if(this.isStatic != operation.isStatic)
+		/*if(this.isStatic != operation.isStatic)
 			return false;
 		if(this.isFinal != operation.isFinal)
-			return false;
+			return false;*/
 		if(this.parameters.size() != operation.parameters.size())
 			return false;
 		int i=0;
@@ -222,6 +226,20 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 			i++;
 		}
 		return true;
+	}
+
+	private boolean equivalentName(UMLOperation operation) {
+		return this.name.equals(operation.name) || equivalentNames(this, operation) || equivalentNames(operation, this);
+	}
+
+	private static boolean equivalentNames(UMLOperation operation1, UMLOperation operation2) {
+		boolean equalReturn = operation1.equalReturnParameter(operation2) && operation1.getParametersWithoutReturnType().size() > 0 && operation2.getParametersWithoutReturnType().size() > 0;
+		if(operation1.name.startsWith(operation2.name) && !operation2.name.equals("get") && !operation2.name.equals("set")) {
+			String suffix1 = operation1.name.substring(operation2.name.length(), operation1.name.length());
+			String className2 = operation2.className.contains(".") ? operation2.className.substring(operation2.className.lastIndexOf(".")+1, operation2.className.length()) : operation2.className;
+			return operation2.name.length() > operation1.name.length() - operation2.name.length() || equalReturn || className2.contains(suffix1);
+		}
+		return false;
 	}
 
 	public List<UMLParameter> getParametersWithoutReturnType() {
@@ -293,13 +311,37 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 				Map<String, OperationInvocation> operationInvocationMap = statement.getMethodInvocationMap();
 				for(String key : operationInvocationMap.keySet()) {
 					OperationInvocation operationInvocation = operationInvocationMap.get(key);
-					if(operationInvocation.matchesOperation(this) || operationInvocation.getMethodName().equals(this.getName())) {
+					if(operationInvocation.matchesOperation(this, this.variableTypeMap(), null) || operationInvocation.getMethodName().equals(this.getName())) {
 						return operationInvocation;
 					}
 				}
 			}
 		}
 		return null;
+	}
+
+	public boolean isGetter() {
+		if(getBody() != null) {
+			List<AbstractStatement> statements = getBody().getCompositeStatement().getStatements();
+			if(statements.size() == 1 && statements.get(0) instanceof StatementObject) {
+				StatementObject statement = (StatementObject)statements.get(0);
+				if(statement.getString().startsWith("return ") && statement.containsOnlyOneVariableAccess()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public boolean equalsIgnoringVisibility(UMLOperation operation) {
+		boolean thisEmptyBody = this.getBody() == null || this.hasEmptyBody();
+		boolean otherEmptyBody = operation.getBody() == null || operation.hasEmptyBody();
+		return this.className.equals(operation.className) &&
+				this.name.equals(operation.name) &&
+				this.isAbstract == operation.isAbstract &&
+				thisEmptyBody == otherEmptyBody &&
+				equalReturnParameter(operation) &&
+				this.getParameterTypeList().equals(operation.getParameterTypeList());
 	}
 
 	public boolean equals(Object o) {
@@ -309,10 +351,13 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 		
 		if(o instanceof UMLOperation) {
 			UMLOperation operation = (UMLOperation)o;
+			boolean thisEmptyBody = this.getBody() == null || this.hasEmptyBody();
+			boolean otherEmptyBody = operation.getBody() == null || operation.hasEmptyBody();
 			return this.className.equals(operation.className) &&
 				this.name.equals(operation.name) &&
 				this.visibility.equals(operation.visibility) &&
 				this.isAbstract == operation.isAbstract &&
+				thisEmptyBody == otherEmptyBody &&
 				this.getParameterTypeList().equals(operation.getParameterTypeList());
 		}
 		return false;
@@ -343,8 +388,10 @@ public class UMLOperation implements Comparable<UMLOperation>, Serializable, Loc
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		boolean thisEmptyBody = this.getBody() == null || this.hasEmptyBody();
 		result = prime * result + ((className == null) ? 0 : className.hashCode());
 		result = prime * result + (isAbstract ? 1231 : 1237);
+		result = prime * result + (thisEmptyBody ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((getParameterTypeList() == null) ? 0 : getParameterTypeList().hashCode());
 		result = prime * result + ((visibility == null) ? 0 : visibility.hashCode());

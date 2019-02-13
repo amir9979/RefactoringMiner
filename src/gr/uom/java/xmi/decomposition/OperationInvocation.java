@@ -5,8 +5,10 @@ import gr.uom.java.xmi.UMLOperation;
 import gr.uom.java.xmi.UMLParameter;
 import gr.uom.java.xmi.UMLType;
 import gr.uom.java.xmi.diff.StringDistance;
+import gr.uom.java.xmi.diff.UMLModelDiff;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -108,36 +110,67 @@ public class OperationInvocation extends AbstractCall {
     public int numberOfSubExpressions() {
     	return subExpressions.size();
     }
-
     public boolean matchesOperation(UMLOperation operation) {
-    	List<String> inferredArgumentTypes = new ArrayList<String>();
+    	return matchesOperation(operation, new HashMap<String, UMLType>(), null);
+    }
+
+    public boolean matchesOperation(UMLOperation operation, Map<String, UMLType> variableTypeMap, UMLModelDiff modelDiff) {
+    	List<UMLType> inferredArgumentTypes = new ArrayList<UMLType>();
     	for(String arg : arguments) {
-    		if(arg.startsWith("\"") && arg.endsWith("\"")) {
-    			inferredArgumentTypes.add("String");
+    		if(variableTypeMap.containsKey(arg)) {
+    			inferredArgumentTypes.add(variableTypeMap.get(arg));
+    		}
+    		else if(arg.startsWith("\"") && arg.endsWith("\"")) {
+    			inferredArgumentTypes.add(UMLType.extractTypeObject("String"));
     		}
     		else if(arg.endsWith(".class")) {
-    			inferredArgumentTypes.add("Class");
+    			inferredArgumentTypes.add(UMLType.extractTypeObject("Class"));
     		}
     		else if(arg.equals("true")) {
-    			inferredArgumentTypes.add("boolean");
+    			inferredArgumentTypes.add(UMLType.extractTypeObject("boolean"));
     		}
     		else if(arg.equals("false")) {
-    			inferredArgumentTypes.add("boolean");
+    			inferredArgumentTypes.add(UMLType.extractTypeObject("boolean"));
     		}
     		else {
     			inferredArgumentTypes.add(null);
     		}
     	}
     	int i=0;
-    	for(UMLType parameterType : operation.getParameterTypeList()) {
+    	for(UMLParameter parameter : operation.getParametersWithoutReturnType()) {
+    		UMLType parameterType = parameter.getType();
     		if(inferredArgumentTypes.size() > i && inferredArgumentTypes.get(i) != null) {
-    			if(!parameterType.getClassType().equals(inferredArgumentTypes.get(i))) {
+    			if(!parameterType.getClassType().equals(inferredArgumentTypes.get(i).toString()) &&
+    					!parameterType.toString().equals(inferredArgumentTypes.get(i).toString()) &&
+    					!compatibleTypes(parameter, inferredArgumentTypes.get(i), modelDiff)) {
     				return false;
     			}
     		}
     		i++;
     	}
     	return this.methodName.equals(operation.getName()) && (this.typeArguments == operation.getParameterTypeList().size() || varArgsMatch(operation));
+    }
+
+    private boolean compatibleTypes(UMLParameter parameter, UMLType type, UMLModelDiff modelDiff) {
+    	String type1 = parameter.getType().toString();
+    	String type2 = type.toString();
+    	if(type1.equals("int") && type2.equals("long"))
+    		return true;
+    	if(type1.equals("long") && type2.equals("int"))
+    		return true;
+    	if(!parameter.isVarargs() && type1.endsWith("Object") && !type2.endsWith("Object"))
+    		return true;
+    	if(!parameter.isVarargs() && type1.endsWith("Base") && type2.endsWith("Impl"))
+    		return true;
+    	if(parameter.getType().equalsWithSubType(type))
+    		return true;
+    	if(!parameter.getType().getTypeArguments().isEmpty() && !type.getTypeArguments().isEmpty() &&
+    			parameter.getType().getClassType().equals(type.getClassType()))
+    		return true;
+    	if(modelDiff != null && modelDiff.isSubclassOf(type.getClassType(), parameter.getType().getClassType())) {
+    		return true;
+    	}
+    	return false;
     }
 
     private boolean varArgsMatch(UMLOperation operation) {

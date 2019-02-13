@@ -61,5 +61,21 @@ public class RenamePackageRefactoring implements Refactoring {
 	@Override
 	public String getProcessedFilePath() {
 		return pattern.getBefore().endsWith(".") ? pattern.getBefore().substring(0, pattern.getBefore().length()-1) : pattern.getBefore();
+
+	public List<String> getInvolvedClassesBeforeRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		for(MoveClassRefactoring ref : moveClassRefactorings) {
+			classNames.add(ref.getOriginalClassName());
+		}
+		return classNames;
+	}
+
+	public List<String> getInvolvedClassesAfterRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		for(MoveClassRefactoring ref : moveClassRefactorings) {
+			classNames.add(ref.getMovedClassName());
+		}
+		return classNames;
+>>>>>>> upstream/master
 	}
 }

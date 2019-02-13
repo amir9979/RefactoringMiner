@@ -33,6 +33,7 @@ public class StatementObject extends AbstractStatement {
 	private Map<String, ObjectCreation> creationMap;
 	private List<String> infixOperators;
 	private List<String> arguments;
+	private List<TernaryOperatorExpression> ternaryOperatorExpressions;
 	
 	public StatementObject(CompilationUnit cu, String filePath, Statement statement, int depth) {
 		super();
@@ -51,6 +52,7 @@ public class StatementObject extends AbstractStatement {
 		this.creationMap = visitor.getCreationMap();
 		this.infixOperators = visitor.getInfixOperators();
 		this.arguments = visitor.getArguments();
+		this.ternaryOperatorExpressions = visitor.getTernaryOperatorExpressions();
 		setDepth(depth);
 		if(Visitor.METHOD_INVOCATION_PATTERN.matcher(statement.toString()).matches()) {
 			if(statement instanceof VariableDeclarationStatement) {
@@ -115,6 +117,13 @@ public class StatementObject extends AbstractStatement {
 		else {
 			this.statement = statement.toString();
 		}
+	}
+
+	public boolean containsOnlyOneVariableAccess() {
+		return variables.size() == 1 && types.size() == 0 && variableDeclarations.size() == 0 &&
+				methodInvocationMap.size() == 0 && anonymousClassDeclarations.size() == 0 && creationMap.size() == 0 &&
+				stringLiterals.size() == 0 && booleanLiterals.size() == 0 && typeLiterals.size() == 0 && numberLiterals.size() == 0 &&
+				infixOperators.size() == 0 && arguments.size() == 0;
 	}
 
 	public List<String> stringRepresentation() {
@@ -192,6 +201,11 @@ public class StatementObject extends AbstractStatement {
 	@Override
 	public List<String> getArguments() {
 		return arguments;
+	}
+
+	@Override
+	public List<TernaryOperatorExpression> getTernaryOperatorExpressions() {
+		return ternaryOperatorExpressions;
 	}
 
 	@Override

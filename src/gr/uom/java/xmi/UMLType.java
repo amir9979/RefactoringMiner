@@ -70,6 +70,10 @@ public class UMLType implements Serializable {
                 return this.arrayDimension == typeObject.arrayDimension;
             else if(this.typeArguments != null && typeObject.typeArguments != null)
                 return equalTypeArguments(typeObject) && this.arrayDimension == typeObject.arrayDimension;
+            else if(this.typeArguments != null && this.typeArguments.equals("<?>") && typeObject.typeArguments == null)
+            	return this.arrayDimension == typeObject.arrayDimension;
+            else if(this.typeArguments == null && typeObject.typeArguments != null && typeObject.typeArguments.equals("<?>"))
+            	return this.arrayDimension == typeObject.arrayDimension;
         }
     	return false;
     }
@@ -83,7 +87,7 @@ public class UMLType implements Serializable {
 		return false;
 	}
 
-	private boolean equalClassType(UMLType type) {
+	public boolean equalClassType(UMLType type) {
     	return this.nonQualifiedClassType.equals(type.nonQualifiedClassType);
 	}
 
@@ -103,6 +107,32 @@ public class UMLType implements Serializable {
 			}
 		}
 		return true;
+	}
+
+	public boolean compatibleTypes(UMLType type) {
+		return this.getClassType().equals(type.getClassType()) ||
+				this.getClassType().equals("Object") ||
+				type.getClassType().equals("Object") ||
+				this.getClassType().startsWith(type.getClassType()) ||
+				type.getClassType().startsWith(this.getClassType()) ||
+				this.getClassType().endsWith(type.getClassType()) ||
+				type.getClassType().endsWith(this.getClassType()) ||
+				this.getTypeArguments().contains(type.getClassType()) ||
+				type.getTypeArguments().contains(this.getClassType()) ||
+				this.commonTokenInClassType(type);
+	}
+
+	private boolean commonTokenInClassType(UMLType type) {
+		String[] tokens1 = CAMEL_CASE_SPLIT_PATTERN.split(this.nonQualifiedClassType);
+		String[] tokens2 = CAMEL_CASE_SPLIT_PATTERN.split(type.nonQualifiedClassType);
+		for(String token1 : tokens1) {
+			for(String token2 : tokens2) {
+				if(token1.equals(token2) || token1.equals(token2 + "s") || token2.equals(token1 + "s")) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
     public int hashCode() {
@@ -127,7 +157,7 @@ public class UMLType implements Serializable {
         return sb.toString();
     }
 
-    public static String getTypeName(Type type, int extraDimensions) {
+	public static String getTypeName(Type type, int extraDimensions) {
 		ITypeBinding binding = type.resolveBinding();
 		if (binding != null) {
 			return binding.getQualifiedName();
@@ -141,14 +171,21 @@ public class UMLType implements Serializable {
 
     private static String simpleNameOf(String name) {
     	int numberOfDots = 0;
+    	int indexOfFirstUpperCaseCharacterFollowedByDot = -1;
     	for (int i = 0; i < name.length(); i++) {
     		if (name.charAt(i) == '.') {
     			numberOfDots++;
+    			if(Character.isUpperCase(name.charAt(i+1)) &&
+    					indexOfFirstUpperCaseCharacterFollowedByDot == -1) {
+    				indexOfFirstUpperCaseCharacterFollowedByDot = i+1;
+    			}
     		}
     	}
-    	if(numberOfDots > 2) {
-    		int dotPosition = name.lastIndexOf('.');
-    		return name.substring(dotPosition + 1);
+    	if(numberOfDots == 0 || Character.isUpperCase(name.charAt(0))) {
+    		return name;
+    	}
+    	if(numberOfDots > 2 && indexOfFirstUpperCaseCharacterFollowedByDot != -1) {
+    		return name.substring(indexOfFirstUpperCaseCharacterFollowedByDot);
     	}
     	return name;
 	}
