@@ -3,6 +3,7 @@ package gr.uom.java.xmi.diff;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringType;
@@ -34,6 +35,16 @@ public class ExtractClassRefactoring implements Refactoring {
 		sb.append(" from class ");
 		sb.append(originalClass);
 		return sb.toString();
+	}
+
+	@Override
+	public String getProcessedClassName() {
+		return originalClass.getName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return originalClass.getLocationInfo().getFilePath();
 	}
 
 	public RefactoringType getRefactoringType() {
