@@ -44,8 +44,9 @@ RefactoringMiner has been used in the following studies:
 6. Anthony Peruma, Mohamed Wiem Mkaouer, Michael J. Decker, and Christian D. Newman, "[An empirical investigation of how and why developers rename identifiers](https://doi.org/10.1145/3242163.3242169)," *2nd International Workshop on Refactoring* (IWoR 2018), Montpellier, France, September 4, 2018.
 7. Patanamon Thongtanunam, Weiyi Shang, and Ahmed E. Hassan, "[Will this clone be short-lived? Towards a better understanding of the characteristics of short-lived clones](https://doi.org/10.1007/s10664-018-9645-2)," Empirical Software Engineering, pp. 1-36, 2018.
 8. Isabella Ferreira, Eduardo Fernandes, Diego Cedrim, Anderson Uchôa, Ana Carla Bibiano, Alessandro Garcia, João Lucas Correia, Filipe Santos, Gabriel Nunes, Caio Barbosa, Baldoino Fonseca, and Rafael de Mello, "[The buggy side of code refactoring: understanding the relationship between refactorings and bugs](https://doi.org/10.1145/3183440.3195030)," *40th International Conference on Software Engineering: Companion Proceedings* (ICSE 2018), Gothenburg, Sweden, May 27-June 3, 2018.
-9. Mehran Mahmoudi, Sarah Nadi, and Nikolaos Tsantalis, "Are Refactorings to Blame? An Empirical Study of Refactorings in Merge Conflicts," *26th IEEE International Conference on Software Analysis, Evolution and Reengineering* (SANER 2019), Hangzhou, China, February 24-27, 2019.
-10. Bin Lin, Csaba Nagy, Gabriele Bavota and Michele Lanza, "On the Impact of Refactoring Operations on Code Naturalness," *26th IEEE International Conference on Software Analysis, Evolution and Reengineering* (SANER 2019), Hangzhou, China, February 24-27, 2019.
+9. Matheus Paixao, "[Software Restructuring: Understanding Longitudinal Architectural Changes and Refactoring](http://discovery.ucl.ac.uk/10060511/)," Ph.D. thesis, Computer Science Department, University College London, July 2018.
+10. Mehran Mahmoudi, Sarah Nadi, and Nikolaos Tsantalis, "Are Refactorings to Blame? An Empirical Study of Refactorings in Merge Conflicts," *26th IEEE International Conference on Software Analysis, Evolution and Reengineering* (SANER 2019), Hangzhou, China, February 24-27, 2019.
+11. Bin Lin, Csaba Nagy, Gabriele Bavota and Michele Lanza, "On the Impact of Refactoring Operations on Code Naturalness," *26th IEEE International Conference on Software Analysis, Evolution and Reengineering* (SANER 2019), Hangzhou, China, February 24-27, 2019.
 
 
 ## Contributors ##
@@ -169,6 +170,67 @@ int startLine
 int endLine
 int startColumn
 int endColumn
+```
+
+## Statement matching information for the detected refactorings ##
+All method-related refactoring (Extract/Inline/Move/Rename/ExtractAndMove Operation) objects come with a `UMLOperationBodyMapper` object, which can be obtained by calling method `getBodyMapper()` on the refactoring object.
+
+![example|1665x820](https://user-images.githubusercontent.com/1483516/52974463-b0240000-338f-11e9-91e2-966f20be2514.png)
+
+#1. You can use the following code snippet to obtain the **newly added statements** in the extracted method:
+```java
+ExtractOperationRefactoring refactoring = ...;
+UMLOperationBodyMapper mapper = refactoring.getBodyMapper();
+List<StatementObject> newLeaves = mapper.getNonMappedLeavesT2(); //newly added leaf statements
+List<CompositeStatementObject> newComposites = mapper.getNonMappedInnerNodesT2(); //newly added composite statements
+List<StatementObject> deletedLeaves = mapper.getNonMappedLeavesT1(); //deleted leaf statements
+List<CompositeStatementObject> deletedComposites = mapper.getNonMappedInnerNodesT1(); //deleted composite statements
+```
+For the Extract Method Refactoring example shown above `mapper.getNonMappedLeavesT2()` returns the following statements:
+```java
+final String url = pageNumber == 0 ? "courses" : "courses?page=" + String.valueOf(pageNumber);
+final CoursesContainer coursesContainer = getFromStepic(url,CoursesContainer.class);
+return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
+```
+#2. You can use the following code snippet to obtain the **matched statements** between the original and the extracted methods:
+```java
+ExtractOperationRefactoring refactoring = ...;
+UMLOperationBodyMapper mapper = refactoring.getBodyMapper();
+for(AbstractCodeMapping mapping : mapper.getMappings()) {
+  AbstractCodeFragment fragment1 = mapping.getFragment1();
+  AbstractCodeFragment fragment2 = mapping.getFragment2();
+  Set<Replacement> replacements = mapping.getReplacements();
+  for(Replacement replacement : replacements) {
+    String valueBefore = replacement.getBefore();
+    String valueAfter = replacement.getAfter();
+    ReplacementType type = replacement.getType();
+  }
+}
+```
+For the Extract Method Refactoring example shown above `mapping.getReplacements()` returns the following AST node replacement for the pair of matched statements:
+```java
+final List<CourseInfo> courseInfos = getFromStepic("courses",CoursesContainer.class).courses;
+final List<CourseInfo> courseInfos = coursesContainer.courses;
+```
+**Replacement**: `getFromStepic("courses",CoursesContainer.class)` -> `coursesContainer`
+
+**ReplacementType**: VARIABLE_REPLACED_WITH_METHOD_INVOCATION
+
+#3. You can use the following code snippet to obtain the **overlapping refactorings** in the extracted method:
+```java
+ExtractOperationRefactoring refactoring = ...;
+UMLOperationBodyMapper mapper = refactoring.getBodyMapper();
+Set<Refactoring> overlappingRefactorings = mapper.getRefactorings();
+```
+For the Extract Method Refactoring example shown above `mapper.getRefactorings()` returns the following refactoring:
+
+**Extract Variable** `coursesContainer : CoursesContainer` in method
+`private addCoursesFromStepic(result List<CourseInfo>, pageNumber int) : boolean`
+from class `com.jetbrains.edu.stepic.EduStepicConnector`
+
+because variable `coursesContainer = getFromStepic(url,CoursesContainer.class)` has been extracted from the following statement of the original method by replacing string literal `"courses"` with variable `url`:
+```java
+final List<CourseInfo> courseInfos = getFromStepic("courses",CoursesContainer.class).courses;
 ```
 
 ## Running from the command line ##

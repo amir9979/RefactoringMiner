@@ -524,10 +524,8 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					if(replacement.getAfter().endsWith(suffixBefore)) {
 						String prefixAfter = replacement.getAfter().substring(0, replacement.getAfter().indexOf(suffixBefore));
 						if(initializer != null) {
-							String longestCommonSuffix = PrefixSuffixUtils.longestCommonSuffix(initializer.toString(), prefixAfter);
 							if(initializer.toString().equals(prefixAfter) ||
-									initializer.toString().equals(applyOverlappingExtractVariable(prefixAfter)) ||
-									(!longestCommonSuffix.isEmpty() && longestCommonSuffix.startsWith("."))) {
+									overlappingExtractVariable(initializer, prefixAfter)) {
 								InlineVariableRefactoring ref = new InlineVariableRefactoring(declaration, operation1);
 								if(!refactorings.contains(ref)) {
 									refactorings.add(ref);
@@ -537,10 +535,8 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					}
 				}
 				if(variableName.equals(replacement.getBefore()) && initializer != null) {
-					String longestCommonSuffix = PrefixSuffixUtils.longestCommonSuffix(initializer.toString(), replacement.getAfter());
 					if(initializer.toString().equals(replacement.getAfter()) ||
-							initializer.toString().equals(applyOverlappingExtractVariable(replacement.getAfter())) ||
-							(!longestCommonSuffix.isEmpty() && longestCommonSuffix.startsWith("."))) {
+							overlappingExtractVariable(initializer, replacement.getAfter())) {
 						InlineVariableRefactoring ref = new InlineVariableRefactoring(declaration, operation1);
 						if(!refactorings.contains(ref)) {
 							refactorings.add(ref);
@@ -603,10 +599,8 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					if(replacement.getBefore().endsWith(suffixAfter)) {
 						String prefixBefore = replacement.getBefore().substring(0, replacement.getBefore().indexOf(suffixAfter));
 						if(initializer != null) {
-							String longestCommonSuffix = PrefixSuffixUtils.longestCommonSuffix(initializer.toString(), prefixBefore);
 							if(initializer.toString().equals(prefixBefore) ||
-									initializer.toString().equals(applyOverlappingExtractVariable(prefixBefore)) ||
-									(!longestCommonSuffix.isEmpty() && longestCommonSuffix.startsWith("."))) {
+									overlappingExtractVariable(initializer, prefixBefore)) {
 								ExtractVariableRefactoring ref = new ExtractVariableRefactoring(declaration, operation2);
 								if(!refactorings.contains(ref)) {
 									refactorings.add(ref);
@@ -616,10 +610,8 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					}
 				}
 				if(variableName.equals(replacement.getAfter()) && initializer != null) {
-					String longestCommonSuffix = PrefixSuffixUtils.longestCommonSuffix(initializer.toString(), replacement.getBefore());
 					if(initializer.toString().equals(replacement.getBefore()) ||
-							initializer.toString().equals(applyOverlappingExtractVariable(replacement.getBefore())) ||
-							(!longestCommonSuffix.isEmpty() && longestCommonSuffix.startsWith("."))) {
+							overlappingExtractVariable(initializer, replacement.getBefore())) {
 						ExtractVariableRefactoring ref = new ExtractVariableRefactoring(declaration, operation2);
 						if(!refactorings.contains(ref)) {
 							refactorings.add(ref);
@@ -650,7 +642,7 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 		}
 	}
 
-	private String applyOverlappingExtractVariable(String input) {
+	private boolean overlappingExtractVariable(AbstractExpression initializer, String input) {
 		String output = input;
 		for(Refactoring ref : this.refactorings) {
 			if(ref instanceof ExtractVariableRefactoring) {
@@ -661,7 +653,38 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 				}
 			}
 		}
-		return output;
+		if(initializer.toString().equals(output)) {
+			return true;
+		}
+		String longestCommonSuffix = PrefixSuffixUtils.longestCommonSuffix(initializer.toString(), input);
+		if(!longestCommonSuffix.isEmpty() && longestCommonSuffix.startsWith(".")) {
+			return true;
+		}
+		String longestCommonPrefix = PrefixSuffixUtils.longestCommonPrefix(initializer.toString(), input);
+		if(!longestCommonSuffix.isEmpty() && !longestCommonPrefix.isEmpty() &&
+				!longestCommonPrefix.equals(initializer.toString()) && !longestCommonPrefix.equals(input) &&
+				!longestCommonSuffix.equals(initializer.toString()) && !longestCommonSuffix.equals(input) &&
+				longestCommonPrefix.length() + longestCommonSuffix.length() < input.length() &&
+				longestCommonPrefix.length() + longestCommonSuffix.length() < initializer.toString().length()) {
+			String s1 = input.substring(longestCommonPrefix.length(), input.lastIndexOf(longestCommonSuffix));
+			String s2 = initializer.toString().substring(longestCommonPrefix.length(), initializer.toString().lastIndexOf(longestCommonSuffix));
+			for(StatementObject statement : nonMappedLeavesT2) {
+				VariableDeclaration variable = statement.getVariableDeclaration(s2);
+				if(variable != null) {
+					if(variable.getInitializer() != null && variable.getInitializer().toString().equals(s1)) {
+						return true;
+					}
+					List<TernaryOperatorExpression> ternaryOperators = statement.getTernaryOperatorExpressions();
+					for(TernaryOperatorExpression ternaryOperator : ternaryOperators) {
+						if(ternaryOperator.getThenExpression().toString().equals(s1) ||
+								ternaryOperator.getElseExpression().toString().equals(s1)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	public int nonMappedElementsT2CallingAddedOperation(List<UMLOperation> addedOperations) {
@@ -1984,14 +2007,31 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 			while(it1.hasNext() && it2.hasNext()) {
 				String arg1 = it1.next();
 				String arg2 = it2.next();
-				if(arg1.contains("(") && arg2.contains("(")) {
-					String s1 = arg1.substring(0, arg1.indexOf("("));
-					String s2 = arg2.substring(0, arg2.indexOf("("));
-					if(s1.equals(s2) && s1.length() > 0) {
-						String args1 = arg1.substring(arg1.indexOf("(")+1, arg1.indexOf(")"));
-						String args2 = arg2.substring(arg2.indexOf("(")+1, arg2.indexOf(")"));
-						if(variables1.contains(args1) && variables2.contains(args2)) {
-							identicalMethodCalls++;
+				if(arg1.contains("(") && arg2.contains("(") && arg1.contains(")") && arg2.contains(")")) {
+					int indexOfOpeningParenthesis1 = arg1.indexOf("(");
+					int indexOfClosingParenthesis1 = arg1.indexOf(")");
+					boolean openingParenthesisInsideSingleQuotes1 = isInsideSingleQuotes(arg1, indexOfOpeningParenthesis1);
+					boolean openingParenthesisInsideDoubleQuotes1 = isInsideDoubleQuotes(arg1, indexOfOpeningParenthesis1);
+					boolean closingParenthesisInsideSingleQuotes1 = isInsideSingleQuotes(arg1, indexOfClosingParenthesis1);
+					boolean closingParenthesisIndideDoubleQuotes1 = isInsideDoubleQuotes(arg1, indexOfClosingParenthesis1);
+					int indexOfOpeningParenthesis2 = arg2.indexOf("(");
+					int indexOfClosingParenthesis2 = arg2.indexOf(")");
+					boolean openingParenthesisInsideSingleQuotes2 = isInsideSingleQuotes(arg2, indexOfOpeningParenthesis2);
+					boolean openingParenthesisInsideDoubleQuotes2 = isInsideDoubleQuotes(arg2, indexOfOpeningParenthesis2);
+					boolean closingParenthesisInsideSingleQuotes2 = isInsideSingleQuotes(arg2, indexOfClosingParenthesis2);
+					boolean closingParenthesisIndideDoubleQuotes2 = isInsideDoubleQuotes(arg2, indexOfClosingParenthesis2);
+					if(!openingParenthesisInsideSingleQuotes1 && !closingParenthesisInsideSingleQuotes1 &&
+							!openingParenthesisInsideDoubleQuotes1 && !closingParenthesisIndideDoubleQuotes1 &&
+							!openingParenthesisInsideSingleQuotes2 && !closingParenthesisInsideSingleQuotes2 &&
+							!openingParenthesisInsideDoubleQuotes2 && !closingParenthesisIndideDoubleQuotes2) {
+						String s1 = arg1.substring(0, indexOfOpeningParenthesis1);
+						String s2 = arg2.substring(0, indexOfOpeningParenthesis2);
+						if(s1.equals(s2) && s1.length() > 0) {
+							String args1 = arg1.substring(indexOfOpeningParenthesis1+1, indexOfClosingParenthesis1);
+							String args2 = arg2.substring(indexOfOpeningParenthesis2+1, indexOfClosingParenthesis2);
+							if(variables1.contains(args1) && variables2.contains(args2)) {
+								identicalMethodCalls++;
+							}
 						}
 					}
 				}
@@ -2166,7 +2206,7 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 	}
 
 	private static boolean isInsideSingleQuotes(String argument, int indexOfChar) {
-		if(indexOfChar > 0) {
+		if(indexOfChar > 0 && indexOfChar < argument.length()-1) {
 			return argument.charAt(indexOfChar-1) == '\'' &&
 					argument.charAt(indexOfChar+1) == '\'';
 		}
