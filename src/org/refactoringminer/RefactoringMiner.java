@@ -57,23 +57,23 @@ public class RefactoringMiner {
         String[] lineItem;
         while ((str = in.readLine()) != null) {
             lineItem = str.split(",");
-            detectAll(lineItem[0], lineItem[1]);
+            detectAll(lineItem[0], lineItem[1],lineItem[2]);
         }
     }
 
 
-    private static void detectAll(String app, String folder) throws Exception {
+    private static void detectAll(String app, String folder, String branch) throws Exception {
         GitService gitService = new GitServiceImpl();
         try (Repository repo = gitService.openRepository(folder)) {
             Path folderPath = Paths.get(folder);
             GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
-            detector.detectAll(repo, null, new RefactoringHandler() {
+            detector.detectAll(repo, branch, new RefactoringHandler() {
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
                     if (refactorings.isEmpty()) {
-                        System.out.println("No refactorings found in commit " + commitId);
+                        System.out.println("["+app+"]    "+"No refactorings found in commit " + commitId);
                     } else {
-                        System.out.println(refactorings.size() + " refactorings found in commit " + commitId);
+                        System.out.println("["+app+"]    " + refactorings.size() + " refactorings found in commit " + commitId);
                         for (Refactoring ref : refactorings) {
                             saveToFile("all_refactorings.csv", getResultRefactoringDescription(app, commitId, ref));
                         }
