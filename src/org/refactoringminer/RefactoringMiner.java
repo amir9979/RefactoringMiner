@@ -39,6 +39,10 @@ public class RefactoringMiner {
             detectBetweenTags(args);
         } else if (option.equalsIgnoreCase("-c")) {
             detectAtCommit(args);
+        } else if (option.equalsIgnoreCase("-gc")) {
+            detectAtGitHubCommit(args);
+        } else if (option.equalsIgnoreCase("-gp")) {
+            detectAtGitHubPullRequest(args);
         } else if (option.equalsIgnoreCase("-bh")) {
             detectBatch(args);
         } else {
@@ -254,7 +258,7 @@ public class RefactoringMiner {
         GitService gitService = new GitServiceImpl();
         try (Repository repo = gitService.openRepository(folder)) {
             GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
-            detector.detectAtCommit(repo, null, commitId, new RefactoringHandler() {
+            detector.detectAtCommit(repo, commitId, new RefactoringHandler() {
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
                     if (refactorings.isEmpty()) {
@@ -274,6 +278,85 @@ public class RefactoringMiner {
                 }
             });
         }
+    }
+
+    private static void detectAtGitHubCommit(String[] args) throws Exception {
+        if (args.length != 4) {
+            throw argumentException();
+        }
+        String gitURL = args[1];
+        String commitId = args[2];
+        int timeout = Integer.parseInt(args[3]);
+        GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+        detector.detectAtCommit(gitURL, commitId, new RefactoringHandler() {
+            @Override
+            public void handle(String commitId, List<Refactoring> refactorings) {
+                System.out.println(JSON(gitURL, commitId, refactorings));
+            }
+
+            @Override
+            public void handleException(String commit, Exception e) {
+                System.err.println("Error processing commit " + commit);
+                e.printStackTrace(System.err);
+            }
+        }, timeout);
+    }
+
+    private static void detectAtGitHubPullRequest(String[] args) throws Exception {
+        if (args.length != 4) {
+            throw argumentException();
+        }
+        String gitURL = args[1];
+        int pullId = Integer.parseInt(args[2]);
+        int timeout = Integer.parseInt(args[3]);
+        GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+        detector.detectAtPullRequest(gitURL, pullId, new RefactoringHandler() {
+            @Override
+            public void handle(String commitId, List<Refactoring> refactorings) {
+                if (refactorings.isEmpty()) {
+                    System.out.println("No refactorings found in commit " + commitId);
+                } else {
+                    System.out.println(refactorings.size() + " refactorings found in commit " + commitId + ": ");
+                    for (Refactoring ref : refactorings) {
+                        System.out.println("  " + ref);
+                    }
+                }
+            }
+
+            @Override
+            public void handleException(String commit, Exception e) {
+                System.err.println("Error processing commit " + commit);
+                e.printStackTrace(System.err);
+            }
+        }, timeout);
+    }
+
+    private static String JSON(String cloneURL, String currentCommitId, List<Refactoring> refactoringsAtRevision) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{").append("\n");
+        sb.append("\"").append("commits").append("\"").append(": ");
+        sb.append("[");
+        sb.append("{");
+        sb.append("\t").append("\"").append("repository").append("\"").append(": ").append("\"").append(cloneURL).append("\"").append(",").append("\n");
+        sb.append("\t").append("\"").append("sha1").append("\"").append(": ").append("\"").append(currentCommitId).append("\"").append(",").append("\n");
+        String url = "https://github.com/" + cloneURL.substring(19, cloneURL.indexOf(".git")) + "/commit/" + currentCommitId;
+        sb.append("\t").append("\"").append("url").append("\"").append(": ").append("\"").append(url).append("\"").append(",").append("\n");
+        sb.append("\t").append("\"").append("refactorings").append("\"").append(": ");
+        sb.append("[");
+        int counter = 0;
+        for(Refactoring refactoring : refactoringsAtRevision) {
+            sb.append(refactoring.toJSON());
+            if(counter < refactoringsAtRevision.size()-1) {
+                sb.append(",");
+            }
+            sb.append("\n");
+            counter++;
+        }
+        sb.append("]");
+        sb.append("}");
+        sb.append("]").append("\n");
+        sb.append("}");
+        return sb.toString();
     }
 
     private static void printTips() {

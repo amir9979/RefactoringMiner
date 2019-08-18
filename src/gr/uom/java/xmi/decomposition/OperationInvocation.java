@@ -1,6 +1,7 @@
 package gr.uom.java.xmi.decomposition;
 
 import gr.uom.java.xmi.LocationInfo;
+import gr.uom.java.xmi.LocationInfo.CodeElementType;
 import gr.uom.java.xmi.UMLOperation;
 import gr.uom.java.xmi.UMLParameter;
 import gr.uom.java.xmi.UMLType;
@@ -26,7 +27,7 @@ public class OperationInvocation extends AbstractCall {
 	private volatile int hashCode = 0;
 	
 	public OperationInvocation(CompilationUnit cu, String filePath, MethodInvocation invocation) {
-		this.locationInfo = new LocationInfo(cu, filePath, invocation);
+		this.locationInfo = new LocationInfo(cu, filePath, invocation, CodeElementType.METHOD_INVOCATION);
 		this.methodName = invocation.getName().getIdentifier();
 		this.typeArguments = invocation.arguments().size();
 		this.arguments = new ArrayList<String>();
@@ -70,7 +71,7 @@ public class OperationInvocation extends AbstractCall {
 	}
 
 	public OperationInvocation(CompilationUnit cu, String filePath, SuperMethodInvocation invocation) {
-		this.locationInfo = new LocationInfo(cu, filePath, invocation);
+		this.locationInfo = new LocationInfo(cu, filePath, invocation, CodeElementType.SUPER_METHOD_INVOCATION);
 		this.methodName = invocation.getName().getIdentifier();
 		this.typeArguments = invocation.arguments().size();
 		this.arguments = new ArrayList<String>();
@@ -110,6 +111,7 @@ public class OperationInvocation extends AbstractCall {
     public int numberOfSubExpressions() {
     	return subExpressions.size();
     }
+
     public boolean matchesOperation(UMLOperation operation) {
     	return matchesOperation(operation, new HashMap<String, UMLType>(), null);
     }
@@ -193,19 +195,28 @@ public class OperationInvocation extends AbstractCall {
     		return false;
     	if(this.subExpressions.size() > 1 || other.subExpressions.size() > 1) {
     		Set<String> intersection = subExpressionIntersection(other);
-    		int thisUnmatchedSubExpressions = this.subExpressions.size() - intersection.size();
-    		int otherUnmatchedSubExpressions = other.subExpressions.size() - intersection.size();
+    		int thisUnmatchedSubExpressions = this.subExpressions().size() - intersection.size();
+    		int otherUnmatchedSubExpressions = other.subExpressions().size() - intersection.size();
     		if(thisUnmatchedSubExpressions > intersection.size() || otherUnmatchedSubExpressions > intersection.size())
     			return false;
     	}
     	return true;
     }
 
+    public boolean containsVeryLongSubExpression() {
+    	for(String expression : subExpressions) {
+    		if(expression.length() > 100 && !UMLOperationBodyMapper.containsMethodSignatureOfAnonymousClass(expression)) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+
     public Set<String> callChainIntersection(OperationInvocation other) {
     	Set<String> s1 = new LinkedHashSet<String>(this.subExpressions);
     	s1.add(this.actualString());
     	Set<String> s2 = new LinkedHashSet<String>(other.subExpressions);
-    	s1.add(other.actualString());
+    	s2.add(other.actualString());
 
     	Set<String> intersection = new LinkedHashSet<String>(s1);
     	intersection.retainAll(s2);
@@ -213,10 +224,26 @@ public class OperationInvocation extends AbstractCall {
     }
 
     private Set<String> subExpressionIntersection(OperationInvocation other) {
-    	Set<String> intersection = new LinkedHashSet<String>(this.subExpressions);
-    	intersection.retainAll(other.subExpressions);
+    	Set<String> subExpressions1 = this.subExpressions();
+    	Set<String> subExpressions2 = other.subExpressions();
+    	Set<String> intersection = new LinkedHashSet<String>(subExpressions1);
+    	intersection.retainAll(subExpressions2);
     	return intersection;
     }
+
+	private Set<String> subExpressions() {
+		Set<String> subExpressions = new LinkedHashSet<String>(this.subExpressions);
+    	String thisExpression = this.expression;
+		if(thisExpression != null) {
+			if(thisExpression.contains(".") && !subExpressions.contains(thisExpression.substring(0, thisExpression.indexOf(".")))) {
+				subExpressions.add(thisExpression.substring(0, thisExpression.indexOf(".")));
+			}
+			else if(!thisExpression.contains(".") && !subExpressions.contains(thisExpression)) {
+				subExpressions.add(thisExpression);
+			}
+    	}
+		return subExpressions;
+	}
 
 	public double normalizedNameDistance(AbstractCall call) {
 		String s1 = getMethodName().toLowerCase();
@@ -344,5 +371,14 @@ public class OperationInvocation extends AbstractCall {
 		boolean differentArguments = !this.arguments.equals(other.arguments) &&
 				argumentIntersection.isEmpty() && !argumentFoundInExpression;
 		return differentExpression && differentName && differentArguments;
+	}
+
+	public boolean identicalWithExpressionCallChainDifference(OperationInvocation other) {
+		Set<String> subExpressionIntersection = subExpressionIntersection(other);
+		return identicalName(other) &&
+				equalArguments(other) &&
+				subExpressionIntersection.size() > 0 &&
+				(subExpressionIntersection.size() == this.subExpressions().size() ||
+				subExpressionIntersection.size() == other.subExpressions().size());
 	}
 }

@@ -1,5 +1,7 @@
 package gr.uom.java.xmi.diff;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.refactoringminer.api.RefactoringType;
@@ -22,9 +24,9 @@ public class MoveAndRenameAttributeRefactoring extends MoveAttributeRefactoring 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getName()).append("\t");
-		sb.append(originalAttribute);
+		sb.append(originalAttribute.toQualifiedString());
 		sb.append(" renamed to ");
-		sb.append(movedAttribute);
+		sb.append(movedAttribute.toQualifiedString());
 		sb.append(" and moved from class ");
 		sb.append(getSourceClassName());
 		sb.append(" to class ");
@@ -38,5 +40,14 @@ public class MoveAndRenameAttributeRefactoring extends MoveAttributeRefactoring 
 
 	public RefactoringType getRefactoringType() {
 		return RefactoringType.MOVE_RENAME_ATTRIBUTE;
+	}
+
+	@Override
+	public List<CodeRange> rightSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(movedAttribute.codeRange()
+				.setDescription("moved and renamed attribute declaration")
+				.setCodeElement(movedAttribute.toString()));
+		return ranges;
 	}
 }

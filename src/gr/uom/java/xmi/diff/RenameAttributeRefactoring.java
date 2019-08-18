@@ -33,6 +33,10 @@ public class RenameAttributeRefactoring implements Refactoring {
 		return renamedAttribute;
 	}
 
+	public Set<CandidateAttributeRefactoring> getAttributeRenames() {
+		return attributeRenames;
+	}
+
 	public RefactoringType getRefactoringType() {
 		return RefactoringType.RENAME_ATTRIBUTE;
 	}
@@ -114,5 +118,23 @@ public class RenameAttributeRefactoring implements Refactoring {
 		List<String> classNames = new ArrayList<String>();
 		classNames.add(classNameAfter);
 		return classNames;
+	}
+
+	@Override
+	public List<CodeRange> leftSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(originalAttribute.codeRange()
+				.setDescription("original attribute declaration")
+				.setCodeElement(originalAttribute.toString()));
+		return ranges;
+	}
+
+	@Override
+	public List<CodeRange> rightSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(renamedAttribute.codeRange()
+				.setDescription("renamed attribute declaration")
+				.setCodeElement(renamedAttribute.toString()));
+		return ranges;
 	}
 }

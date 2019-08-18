@@ -31,6 +31,7 @@ public class Replacement {
 		int result = 1;
 		result = prime * result + ((after == null) ? 0 : after.hashCode());
 		result = prime * result + ((before == null) ? 0 : before.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
 
@@ -42,7 +43,7 @@ public class Replacement {
 			return false;
 		if(obj instanceof Replacement) {
 			Replacement other = (Replacement)obj;
-			return this.before.equals(other.before) && this.after.equals(other.after);
+			return this.before.equals(other.before) && this.after.equals(other.after) && this.type.equals(other.type);
 		}
 		return false;
 	}
@@ -61,10 +62,13 @@ public class Replacement {
 	
 	public enum ReplacementType {
 		TYPE, STRING_LITERAL, NUMBER_LITERAL, ANONYMOUS_CLASS_DECLARATION, INFIX_OPERATOR, VARIABLE_NAME, VARIABLE_DECLARATION,
+		MERGE_VARIABLES, SPLIT_VARIABLE, ADD_VARIABLE,
+		INVERT_CONDITIONAL,
 		BOOLEAN_REPLACED_WITH_VARIABLE,
 		BOOLEAN_REPLACED_WITH_ARGUMENT,
 		TYPE_LITERAL_REPLACED_WITH_VARIABLE,
 		METHOD_INVOCATION,
+		METHOD_INVOCATION_EXPRESSION,
 		METHOD_INVOCATION_ARGUMENT,
 		METHOD_INVOCATION_ARGUMENT_WRAPPED,
 		METHOD_INVOCATION_NAME,
@@ -74,11 +78,16 @@ public class Replacement {
 		ARGUMENT_REPLACED_WITH_STATEMENT,
 		ARGUMENT_REPLACED_WITH_RIGHT_HAND_SIDE_OF_ASSIGNMENT_EXPRESSION,
 		VARIABLE_REPLACED_WITH_METHOD_INVOCATION,
+		VARIABLE_REPLACED_WITH_EXPRESSION_OF_METHOD_INVOCATION,
+		VARIABLE_REPLACED_WITH_ARRAY_ACCESS,
+		VARIABLE_REPLACED_WITH_PREFIX_EXPRESSION,
+		VARIABLE_REPLACED_WITH_STRING_LITERAL,
 		CLASS_INSTANCE_CREATION,
 		CLASS_INSTANCE_CREATION_ARGUMENT,
 		ARRAY_CREATION_REPLACED_WITH_DATA_STRUCTURE_CREATION,
 		ARRAY_INITIALIZER_REPLACED_WITH_METHOD_INVOCATION_ARGUMENTS,
 		EXPRESSION_REPLACED_WITH_TERNARY_ELSE,
-		EXPRESSION_REPLACED_WITH_TERNARY_THEN;
+		EXPRESSION_REPLACED_WITH_TERNARY_THEN,
+		COMPOSITE;
 	}
 }

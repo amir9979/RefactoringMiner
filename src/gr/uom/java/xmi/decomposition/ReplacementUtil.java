@@ -1,12 +1,22 @@
 package gr.uom.java.xmi.decomposition;
 
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ReplacementUtil {
-	private static final String[] SPECIAL_CHARACTERS = {";", ",", ")", "=", "+", "-", ">", "<", ".", "]", " "};
+	private static final String[] SPECIAL_CHARACTERS = {";", ",", ")", "=", "+", "-", ">", "<", ".", "]", " ", "(", "["};
+	private static final String[] SPECIAL_ARGUMENT_CHARACTERS = {";", ",", ")", "=", "+", "-", ">", "<", ".", "]", " "};
 	
+	public static int countInstances(String completeString, String subString) {
+		for(String character : SPECIAL_CHARACTERS) {
+			int index = completeString.indexOf(subString + character);
+			if(index != -1) {
+				return (completeString.length() - completeString.replace(subString + character, "").length()) / (subString.length() + 1);
+			}
+		}
+		return 0;
+	}
+
 	public static boolean contains(String completeString, String subString) {
 		for(String character : SPECIAL_CHARACTERS) {
 			if(completeString.contains(subString + character)) {
@@ -16,13 +26,9 @@ public class ReplacementUtil {
 		return false;
 	}
 
-	public static String performReplacement(String completeString, String subString, String replacement) {
+	public static String performArgumentReplacement(String completeString, String subString, String replacement) {
 		String temp = new String(completeString);
-		if(completeString.equals(subString)) {
-			temp = temp.replace(subString, replacement);
-			return temp;
-		}
-		for(String character : SPECIAL_CHARACTERS) {
+		for(String character : SPECIAL_ARGUMENT_CHARACTERS) {
 			if(completeString.contains(subString + character)) {
 				temp = temp.replace(subString + character, replacement + character);
 			}
@@ -30,46 +36,127 @@ public class ReplacementUtil {
 		return temp;
 	}
 
-	public static String performReplacement(String completeString1, String completeString2, String subString1, String subString2, Set<String> variables1, Set<String> variables2) {	
-		String temp = new String(completeString1);
-		boolean replacementOccurred = false;
+	public static String performReplacement(String completeString, String subString, String replacement) {
+		String temp = new String(completeString);
+		if(completeString.equals(subString)) {
+			temp = temp.replace(subString, replacement);
+			return temp;
+		}
+		boolean replacementDone = false;
 		for(String character : SPECIAL_CHARACTERS) {
-			if(variables1.contains(subString1) && variables2.contains(subString2) && completeString1.contains(subString1 + character) && completeString2.contains(subString2 + character)) {
-				temp = temp.replace(subString1 + character, subString2 + character);
-				replacementOccurred = true;
+			if(completeString.contains(subString + character)) {
+				temp = temp.replace(subString + character, replacement + character);
+				replacementDone = true;
 			}
 		}
-		if(!replacementOccurred && completeString1.contains(subString1) && completeString2.contains(subString2)) {
-			try {
-				char nextCharacter1 = completeString1.charAt(completeString1.indexOf(subString1) + subString1.length());
-				char nextCharacter2 = completeString2.charAt(completeString2.indexOf(subString2) + subString2.length());
-				if(nextCharacter1 == nextCharacter2) {
-					temp = completeString1.replaceAll(Pattern.quote(subString1), Matcher.quoteReplacement(subString2));
+		if(!replacementDone) {
+			for(String character : SPECIAL_CHARACTERS) {
+				if(completeString.contains(character + subString)) {
+					temp = temp.replace(character + subString, character + replacement);
 				}
-			} catch(IndexOutOfBoundsException e) {
-				return temp;
 			}
 		}
 		return temp;
 	}
 
-	public static int indexOf(String completeString, String subString) {
+	public static String performReplacement(String completeString1, String completeString2, String subString1, String subString2) {	
+		String temp = new String(completeString1);
+		boolean replacementOccurred = false;
 		for(String character : SPECIAL_CHARACTERS) {
-			int index = completeString.indexOf(subString + character);
-			if(index != -1) {
-				return index;
+			if(temp.contains(subString1 + character) && completeString2.contains(subString2 + character)) {
+				StringBuffer sb = new StringBuffer();
+				Pattern p1 = Pattern.compile(Pattern.quote(subString1 + character));
+				Matcher m1 = p1.matcher(temp);
+				Pattern p2 = Pattern.compile(Pattern.quote(subString2 + character));
+				Matcher m2 = p2.matcher(completeString2);
+				while(m1.find() && m2.find()) {
+					int start1 = m1.start();
+					int start2 = m2.start();
+					String characterBeforeMatch1 = start1 == 0 ? "" : String.valueOf(temp.charAt(start1 - 1));
+					String characterBeforeMatch2 = start2 == 0 ? "" : String.valueOf(completeString2.charAt(start2 - 1));
+					if(compatibleCharacterBeforeMatch(characterBeforeMatch1, characterBeforeMatch2)) {
+						m1.appendReplacement(sb, Matcher.quoteReplacement(subString2 + character));
+						replacementOccurred = true;
+					}
+				}
+				m1.appendTail(sb);
+				temp = sb.toString();
 			}
 		}
-		return -1;
+		if(!replacementOccurred && !UMLOperationBodyMapper.containsMethodSignatureOfAnonymousClass(completeString1) && !UMLOperationBodyMapper.containsMethodSignatureOfAnonymousClass(completeString2)) {
+			for(String character : SPECIAL_CHARACTERS) {
+				if(temp.contains(character + subString1) && completeString2.contains(character + subString2)) {
+					StringBuffer sb = new StringBuffer();
+					Pattern p1 = Pattern.compile(Pattern.quote(character + subString1));
+					Matcher m1 = p1.matcher(temp);
+					Pattern p2 = Pattern.compile(Pattern.quote(character + subString2));
+					Matcher m2 = p2.matcher(completeString2);
+					while(m1.find() && m2.find()) {
+						int end1 = m1.end();
+						int end2 = m2.end();
+						String characterAfterMatch1 = end1 == temp.length() ? "" : String.valueOf(temp.charAt(end1));
+						String characterAfterMatch2 = end2 == completeString2.length() ? "" : String.valueOf(completeString2.charAt(end2));
+						if(compatibleCharacterAfterMatch(characterAfterMatch1, characterAfterMatch2)) {
+							m1.appendReplacement(sb, Matcher.quoteReplacement(character + subString2));
+							replacementOccurred = true;
+						}
+					}
+					m1.appendTail(sb);
+					temp = sb.toString();
+				}
+			}
+		}
+		return temp;
 	}
 
-	public static int lastIndexOf(String completeString, String subString) {
-		for(String character : SPECIAL_CHARACTERS) {
-			int index = completeString.lastIndexOf(subString + character);
-			if(index != -1) {
-				return index;
-			}
+	private static boolean compatibleCharacterBeforeMatch(String characterBefore1, String characterBefore2) {
+		if(characterBefore1 != null && characterBefore2 != null) {
+			if(characterBefore1.equals(characterBefore2))
+				return true;
+			if(characterBefore1.equals(",") && characterBefore2.equals("("))
+				return true;
+			if(characterBefore1.equals("(") && characterBefore2.equals(","))
+				return true;
+			if(characterBefore1.equals(" ") && characterBefore2.equals(""))
+				return true;
+			if(characterBefore1.equals("") && characterBefore2.equals(" "))
+				return true;
 		}
-		return -1;
+		return false;
+	}
+
+	private static boolean compatibleCharacterAfterMatch(String characterAfter1, String characterAfter2) {
+		if(characterAfter1 != null && characterAfter2 != null) {
+			if(characterAfter1.equals(characterAfter2))
+				return true;
+			if(characterAfter1.equals(",") && characterAfter2.equals(")"))
+				return true;
+			if(characterAfter1.equals(")") && characterAfter2.equals(","))
+				return true;
+		}
+		return false;
+	}
+	
+	public static boolean sameCharsBeforeAfter(String completeString1, String completeString2, String commonSubString) {
+		Pattern p = Pattern.compile(Pattern.quote(commonSubString));
+		Matcher m1 = p.matcher(completeString1);
+		Matcher m2 = p.matcher(completeString2);
+		int matches = 0;
+		int compatibleMatches = 0;
+		while(m1.find() && m2.find()) {
+			int start1 = m1.start();
+			int start2 = m2.start();
+			String characterBeforeMatch1 = start1 == 0 ? "" : String.valueOf(completeString1.charAt(start1 - 1));
+			String characterBeforeMatch2 = start2 == 0 ? "" : String.valueOf(completeString2.charAt(start2 - 1));
+			int end1 = m1.end();
+			int end2 = m2.end();
+			String characterAfterMatch1 = end1 == completeString1.length() ? "" : String.valueOf(completeString1.charAt(end1));
+			String characterAfterMatch2 = end2 == completeString2.length() ? "" : String.valueOf(completeString2.charAt(end2));
+			if(characterBeforeMatch1.equals(characterBeforeMatch2) && characterAfterMatch1.equals(characterAfterMatch2)) {
+				compatibleMatches++;
+			}
+			matches++;
+		}
+		return matches == compatibleMatches;
 	}
 }

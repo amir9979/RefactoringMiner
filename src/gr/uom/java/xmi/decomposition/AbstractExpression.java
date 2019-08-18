@@ -7,6 +7,8 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 
 import gr.uom.java.xmi.LocationInfo;
+import gr.uom.java.xmi.LocationInfo.CodeElementType;
+import gr.uom.java.xmi.diff.CodeRange;
 
 public class AbstractExpression extends AbstractCodeFragment {
 	
@@ -16,19 +18,23 @@ public class AbstractExpression extends AbstractCodeFragment {
 	private List<String> variables;
 	private List<String> types;
 	private List<VariableDeclaration> variableDeclarations;
-	private Map<String, OperationInvocation> methodInvocationMap;
-	private List<String> anonymousClassDeclarations;
+	private Map<String, List<OperationInvocation>> methodInvocationMap;
+	private List<AnonymousClassDeclarationObject> anonymousClassDeclarations;
 	private List<String> stringLiterals;
 	private List<String> numberLiterals;
 	private List<String> booleanLiterals;
 	private List<String> typeLiterals;
-	private Map<String, ObjectCreation> creationMap;
+	private Map<String, List<ObjectCreation>> creationMap;
 	private List<String> infixOperators;
+	private List<String> arrayAccesses;
+	private List<String> prefixExpressions;
+	private List<String> postfixExpressions;
 	private List<String> arguments;
 	private List<TernaryOperatorExpression> ternaryOperatorExpressions;
+	private List<LambdaExpressionObject> lambdas;
     
-    public AbstractExpression(CompilationUnit cu, String filePath, Expression expression) {
-    	this.locationInfo = new LocationInfo(cu, filePath, expression);
+    public AbstractExpression(CompilationUnit cu, String filePath, Expression expression, CodeElementType codeElementType) {
+    	this.locationInfo = new LocationInfo(cu, filePath, expression, codeElementType);
     	Visitor visitor = new Visitor(cu, filePath);
     	expression.accept(visitor);
 		this.variables = visitor.getVariables();
@@ -42,8 +48,12 @@ public class AbstractExpression extends AbstractCodeFragment {
 		this.typeLiterals = visitor.getTypeLiterals();
 		this.creationMap = visitor.getCreationMap();
 		this.infixOperators = visitor.getInfixOperators();
+		this.arrayAccesses = visitor.getArrayAccesses();
+		this.prefixExpressions = visitor.getPrefixExpressions();
+		this.postfixExpressions = visitor.getPostfixExpressions();
 		this.arguments = visitor.getArguments();
 		this.ternaryOperatorExpressions = visitor.getTernaryOperatorExpressions();
+		this.lambdas = visitor.getLambdas();
     	this.expression = expression.toString();
     	this.owner = null;
     }
@@ -55,6 +65,11 @@ public class AbstractExpression extends AbstractCodeFragment {
     public CompositeStatementObject getOwner() {
     	return this.owner;
     }
+
+	@Override
+	public CompositeStatementObject getParent() {
+		return getOwner();
+	}
 
     public String getExpression() {
     	return expression;
@@ -84,12 +99,12 @@ public class AbstractExpression extends AbstractCodeFragment {
 	}
 
 	@Override
-	public Map<String, OperationInvocation> getMethodInvocationMap() {
+	public Map<String, List<OperationInvocation>> getMethodInvocationMap() {
 		return methodInvocationMap;
 	}
 
 	@Override
-	public List<String> getAnonymousClassDeclarations() {
+	public List<AnonymousClassDeclarationObject> getAnonymousClassDeclarations() {
 		return anonymousClassDeclarations;
 	}
 
@@ -114,13 +129,28 @@ public class AbstractExpression extends AbstractCodeFragment {
 	}
 
 	@Override
-	public Map<String, ObjectCreation> getCreationMap() {
+	public Map<String, List<ObjectCreation>> getCreationMap() {
 		return creationMap;
 	}
 
 	@Override
 	public List<String> getInfixOperators() {
 		return infixOperators;
+	}
+
+	@Override
+	public List<String> getArrayAccesses() {
+		return arrayAccesses;
+	}
+
+	@Override
+	public List<String> getPrefixExpressions() {
+		return prefixExpressions;
+	}
+
+	@Override
+	public List<String> getPostfixExpressions() {
+		return postfixExpressions;
 	}
 
 	@Override
@@ -131,6 +161,11 @@ public class AbstractExpression extends AbstractCodeFragment {
 	@Override
 	public List<TernaryOperatorExpression> getTernaryOperatorExpressions() {
 		return ternaryOperatorExpressions;
+	}
+
+	@Override
+	public List<LambdaExpressionObject> getLambdas() {
+		return lambdas;
 	}
 
 	public LocationInfo getLocationInfo() {
@@ -156,5 +191,9 @@ public class AbstractExpression extends AbstractCodeFragment {
 			}
 		}
 		return null;
+	}
+
+	public CodeRange codeRange() {
+		return locationInfo.codeRange();
 	}
 }

@@ -16,6 +16,8 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import gr.uom.java.xmi.LocationInfo;
+import gr.uom.java.xmi.LocationInfo.CodeElementType;
+import gr.uom.java.xmi.diff.CodeRange;
 
 public class StatementObject extends AbstractStatement {
 	
@@ -24,20 +26,24 @@ public class StatementObject extends AbstractStatement {
 	private List<String> variables;
 	private List<String> types;
 	private List<VariableDeclaration> variableDeclarations;
-	private Map<String, OperationInvocation> methodInvocationMap;
-	private List<String> anonymousClassDeclarations;
+	private Map<String, List<OperationInvocation>> methodInvocationMap;
+	private List<AnonymousClassDeclarationObject> anonymousClassDeclarations;
 	private List<String> stringLiterals;
 	private List<String> numberLiterals;
 	private List<String> booleanLiterals;
 	private List<String> typeLiterals;
-	private Map<String, ObjectCreation> creationMap;
+	private Map<String, List<ObjectCreation>> creationMap;
 	private List<String> infixOperators;
+	private List<String> arrayAccesses;
+	private List<String> prefixExpressions;
+	private List<String> postfixExpressions;
 	private List<String> arguments;
 	private List<TernaryOperatorExpression> ternaryOperatorExpressions;
+	private List<LambdaExpressionObject> lambdas;
 	
-	public StatementObject(CompilationUnit cu, String filePath, Statement statement, int depth) {
+	public StatementObject(CompilationUnit cu, String filePath, Statement statement, int depth, CodeElementType codeElementType) {
 		super();
-		this.locationInfo = new LocationInfo(cu, filePath, statement);
+		this.locationInfo = new LocationInfo(cu, filePath, statement, codeElementType);
 		Visitor visitor = new Visitor(cu, filePath);
 		statement.accept(visitor);
 		this.variables = visitor.getVariables();
@@ -51,8 +57,12 @@ public class StatementObject extends AbstractStatement {
 		this.typeLiterals = visitor.getTypeLiterals();
 		this.creationMap = visitor.getCreationMap();
 		this.infixOperators = visitor.getInfixOperators();
+		this.arrayAccesses = visitor.getArrayAccesses();
+		this.prefixExpressions = visitor.getPrefixExpressions();
+		this.postfixExpressions = visitor.getPostfixExpressions();
 		this.arguments = visitor.getArguments();
 		this.ternaryOperatorExpressions = visitor.getTernaryOperatorExpressions();
+		this.lambdas = visitor.getLambdas();
 		setDepth(depth);
 		if(Visitor.METHOD_INVOCATION_PATTERN.matcher(statement.toString()).matches()) {
 			if(statement instanceof VariableDeclarationStatement) {
@@ -159,12 +169,12 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
-	public Map<String, OperationInvocation> getMethodInvocationMap() {
+	public Map<String, List<OperationInvocation>> getMethodInvocationMap() {
 		return methodInvocationMap;
 	}
 
 	@Override
-	public List<String> getAnonymousClassDeclarations() {
+	public List<AnonymousClassDeclarationObject> getAnonymousClassDeclarations() {
 		return anonymousClassDeclarations;
 	}
 
@@ -189,13 +199,28 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
-	public Map<String, ObjectCreation> getCreationMap() {
+	public Map<String, List<ObjectCreation>> getCreationMap() {
 		return creationMap;
 	}
 
 	@Override
 	public List<String> getInfixOperators() {
 		return infixOperators;
+	}
+
+	@Override
+	public List<String> getArrayAccesses() {
+		return arrayAccesses;
+	}
+
+	@Override
+	public List<String> getPrefixExpressions() {
+		return prefixExpressions;
+	}
+
+	@Override
+	public List<String> getPostfixExpressions() {
+		return postfixExpressions;
 	}
 
 	@Override
@@ -209,12 +234,21 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
+	public List<LambdaExpressionObject> getLambdas() {
+		return lambdas;
+	}
+
+	@Override
 	public int statementCount() {
 		return 1;
 	}
 
 	public LocationInfo getLocationInfo() {
 		return locationInfo;
+	}
+
+	public CodeRange codeRange() {
+		return locationInfo.codeRange();
 	}
 
 	public VariableDeclaration getVariableDeclaration(String variableName) {

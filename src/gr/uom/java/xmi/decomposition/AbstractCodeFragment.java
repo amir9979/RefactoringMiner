@@ -33,20 +33,25 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
 		this.index = index;
 	}
 	
+	public abstract CompositeStatementObject getParent();
 	public abstract String getString();
 	public abstract List<String> getVariables();
 	public abstract List<String> getTypes();
 	public abstract List<VariableDeclaration> getVariableDeclarations();
-	public abstract Map<String, OperationInvocation> getMethodInvocationMap();
-	public abstract List<String> getAnonymousClassDeclarations();
+	public abstract Map<String, List<OperationInvocation>> getMethodInvocationMap();
+	public abstract List<AnonymousClassDeclarationObject> getAnonymousClassDeclarations();
 	public abstract List<String> getStringLiterals();
 	public abstract List<String> getNumberLiterals();
 	public abstract List<String> getBooleanLiterals();
 	public abstract List<String> getTypeLiterals();
-	public abstract Map<String, ObjectCreation> getCreationMap();
+	public abstract Map<String, List<ObjectCreation>> getCreationMap();
 	public abstract List<String> getInfixOperators();
+	public abstract List<String> getArrayAccesses();
+	public abstract List<String> getPrefixExpressions();
+	public abstract List<String> getPostfixExpressions();
 	public abstract List<String> getArguments();
 	public abstract List<TernaryOperatorExpression> getTernaryOperatorExpressions();
+	public abstract List<LambdaExpressionObject> getLambdas();
 	public abstract VariableDeclaration searchVariableDeclaration(String variableName);
 	public abstract VariableDeclaration getVariableDeclaration(String variableName);
 	
@@ -75,7 +80,7 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
 							isInsideStringLiteral = true;
 						}
 					}
-					else if(start == 0) {
+					else if(start == 0 && !afterReplacements.startsWith("return ")) {
 						isArgument = true;
 					}
 					if(isArgument && !isInsideStringLiteral) {
@@ -151,50 +156,67 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
 	}
 
 	public ObjectCreation creationCoveringEntireFragment() {
-		Map<String, ObjectCreation> creationMap = getCreationMap();
+		Map<String, List<ObjectCreation>> creationMap = getCreationMap();
 		String statement = getString();
 		for(String objectCreation : creationMap.keySet()) {
-			ObjectCreation creation = creationMap.get(objectCreation);
-			if((objectCreation + ";\n").equals(statement) || objectCreation.equals(statement)) {
-				creation.coverage = StatementCoverageType.ONLY_CALL;
-				return creation;
-			}
-			else if(("return " + objectCreation + ";\n").equals(statement)) {
-				creation.coverage = StatementCoverageType.RETURN_CALL;
-				return creation;
-			}
-			else if(("throw " + objectCreation + ";\n").equals(statement)) {
-				creation.coverage = StatementCoverageType.THROW_CALL;
-				return creation;
-			}
-			else if(expressionIsTheInitializerOfVariableDeclaration(objectCreation)) {
-				creation.coverage = StatementCoverageType.VARIABLE_DECLARATION_INITIALIZER_CALL;
-				return creation;
+			List<ObjectCreation> creations = creationMap.get(objectCreation);
+			for(ObjectCreation creation : creations) {
+				if((objectCreation + ";\n").equals(statement) || objectCreation.equals(statement)) {
+					creation.coverage = StatementCoverageType.ONLY_CALL;
+					return creation;
+				}
+				else if(("return " + objectCreation + ";\n").equals(statement)) {
+					creation.coverage = StatementCoverageType.RETURN_CALL;
+					return creation;
+				}
+				else if(("throw " + objectCreation + ";\n").equals(statement)) {
+					creation.coverage = StatementCoverageType.THROW_CALL;
+					return creation;
+				}
+				else if(expressionIsTheInitializerOfVariableDeclaration(objectCreation)) {
+					creation.coverage = StatementCoverageType.VARIABLE_DECLARATION_INITIALIZER_CALL;
+					return creation;
+				}
 			}
 		}
 		return null;
 	}
 
 	public OperationInvocation invocationCoveringEntireFragment() {
-		Map<String, OperationInvocation> methodInvocationMap = getMethodInvocationMap();
+		Map<String, List<OperationInvocation>> methodInvocationMap = getMethodInvocationMap();
 		String statement = getString();
 		for(String methodInvocation : methodInvocationMap.keySet()) {
-			OperationInvocation invocation = methodInvocationMap.get(methodInvocation);
-			if((methodInvocation + ";\n").equals(statement) || methodInvocation.equals(statement)) {
-				invocation.coverage = StatementCoverageType.ONLY_CALL;
-				return invocation;
+			List<OperationInvocation> invocations = methodInvocationMap.get(methodInvocation);
+			for(OperationInvocation invocation : invocations) {
+				if((methodInvocation + ";\n").equals(statement) || methodInvocation.equals(statement)) {
+					invocation.coverage = StatementCoverageType.ONLY_CALL;
+					return invocation;
+				}
+				else if(("return " + methodInvocation + ";\n").equals(statement)) {
+					invocation.coverage = StatementCoverageType.RETURN_CALL;
+					return invocation;
+				}
+				else if(isCastExpressionCoveringEntireFragment(methodInvocation)) {
+					invocation.coverage = StatementCoverageType.CAST_CALL;
+					return invocation;
+				}
+				else if(expressionIsTheInitializerOfVariableDeclaration(methodInvocation)) {
+					invocation.coverage = StatementCoverageType.VARIABLE_DECLARATION_INITIALIZER_CALL;
+					return invocation;
+				}
 			}
-			else if(("return " + methodInvocation + ";\n").equals(statement)) {
-				invocation.coverage = StatementCoverageType.RETURN_CALL;
-				return invocation;
-			}
-			else if(isCastExpressionCoveringEntireFragment(methodInvocation)) {
-				invocation.coverage = StatementCoverageType.CAST_CALL;
-				return invocation;
-			}
-			else if(expressionIsTheInitializerOfVariableDeclaration(methodInvocation)) {
-				invocation.coverage = StatementCoverageType.VARIABLE_DECLARATION_INITIALIZER_CALL;
-				return invocation;
+		}
+		return null;
+	}
+
+	public OperationInvocation assignmentInvocationCoveringEntireStatement() {
+		Map<String, List<OperationInvocation>> methodInvocationMap = getMethodInvocationMap();
+		for(String methodInvocation : methodInvocationMap.keySet()) {
+			List<OperationInvocation> invocations = methodInvocationMap.get(methodInvocation);
+			for(OperationInvocation invocation : invocations) {
+				if(expressionIsTheRightHandSideOfAssignemnt(methodInvocation)) {
+					return invocation;
+				}
 			}
 		}
 		return null;
@@ -231,7 +253,31 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
 		return false;
 	}
 
+	private boolean expressionIsTheRightHandSideOfAssignemnt(String expression) {
+		String statement = getString();
+		if(statement.contains("=")) {
+			List<String> variables = getVariables();
+			if(variables.size() > 0) {
+				String s = variables.get(0) + "=" + expression + ";\n";
+				if(statement.equals(s)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public boolean throwsNewException() {
 		return getString().startsWith("throw new ");
+	}
+
+	public boolean countableStatement() {
+		String statement = getString();
+		//covers the cases of methods with only one statement in their body
+		if(this instanceof AbstractStatement && ((AbstractStatement)this).getParent().statementCount() == 1 && ((AbstractStatement)this).getParent().getParent() == null) {
+			return true;
+		}
+		return !statement.equals("{") && !statement.startsWith("catch(") && !statement.startsWith("case ") && !statement.startsWith("default :") &&
+				!statement.startsWith("return true;") && !statement.startsWith("return false;") && !statement.startsWith("return this;") && !statement.startsWith("return null;") && !statement.startsWith("return;");
 	}
 }

@@ -11,7 +11,9 @@ import org.refactoringminer.api.RefactoringType;
 import gr.uom.java.xmi.UMLOperation;
 import gr.uom.java.xmi.decomposition.AbstractCodeFragment;
 import gr.uom.java.xmi.decomposition.AbstractCodeMapping;
+import gr.uom.java.xmi.decomposition.CompositeStatementObject;
 import gr.uom.java.xmi.decomposition.OperationInvocation;
+import gr.uom.java.xmi.decomposition.StatementObject;
 import gr.uom.java.xmi.decomposition.UMLOperationBodyMapper;
 import gr.uom.java.xmi.decomposition.replacement.Replacement;
 
@@ -19,18 +21,18 @@ public class ExtractOperationRefactoring implements Refactoring {
 	private UMLOperation extractedOperation;
 	private UMLOperation sourceOperationBeforeExtraction;
 	private UMLOperation sourceOperationAfterExtraction;
-	private OperationInvocation extractedOperationInvocation;
+	private List<OperationInvocation> extractedOperationInvocations;
 	private Set<Replacement> replacements;
 	private Set<AbstractCodeFragment> extractedCodeFragmentsFromSourceOperation;
 	private Set<AbstractCodeFragment> extractedCodeFragmentsToExtractedOperation;
 	private UMLOperationBodyMapper bodyMapper;
 
-	public ExtractOperationRefactoring(UMLOperationBodyMapper bodyMapper, UMLOperation sourceOperationAfterExtraction, OperationInvocation operationInvocation) {
+	public ExtractOperationRefactoring(UMLOperationBodyMapper bodyMapper, UMLOperation sourceOperationAfterExtraction, List<OperationInvocation> operationInvocations) {
 		this.bodyMapper = bodyMapper;
 		this.extractedOperation = bodyMapper.getOperation2();
 		this.sourceOperationBeforeExtraction = bodyMapper.getOperation1();
 		this.sourceOperationAfterExtraction = sourceOperationAfterExtraction;
-		this.extractedOperationInvocation = operationInvocation;
+		this.extractedOperationInvocations = operationInvocations;
 		this.replacements = bodyMapper.getReplacements();
 		this.extractedCodeFragmentsFromSourceOperation = new LinkedHashSet<AbstractCodeFragment>();
 		this.extractedCodeFragmentsToExtractedOperation = new LinkedHashSet<AbstractCodeFragment>();
@@ -41,12 +43,12 @@ public class ExtractOperationRefactoring implements Refactoring {
 	}
 
 	public ExtractOperationRefactoring(UMLOperationBodyMapper bodyMapper, UMLOperation extractedOperation,
-			UMLOperation sourceOperationBeforeExtraction, UMLOperation sourceOperationAfterExtraction, OperationInvocation operationInvocation) {
+			UMLOperation sourceOperationBeforeExtraction, UMLOperation sourceOperationAfterExtraction, List<OperationInvocation> operationInvocations) {
 		this.bodyMapper = bodyMapper;
 		this.extractedOperation = extractedOperation;
 		this.sourceOperationBeforeExtraction = sourceOperationBeforeExtraction;
 		this.sourceOperationAfterExtraction = sourceOperationAfterExtraction;
-		this.extractedOperationInvocation = operationInvocation;
+		this.extractedOperationInvocations = operationInvocations;
 		this.replacements = bodyMapper.getReplacements();
 		this.extractedCodeFragmentsFromSourceOperation = new LinkedHashSet<AbstractCodeFragment>();
 		this.extractedCodeFragmentsToExtractedOperation = new LinkedHashSet<AbstractCodeFragment>();
@@ -99,8 +101,8 @@ public class ExtractOperationRefactoring implements Refactoring {
 		return sourceOperationAfterExtraction;
 	}
 
-	public OperationInvocation getExtractedOperationInvocation() {
-		return extractedOperationInvocation;
+	public List<OperationInvocation> getExtractedOperationInvocations() {
+		return extractedOperationInvocations;
 	}
 
 	public Set<Replacement> getReplacements() {
@@ -151,10 +153,14 @@ public class ExtractOperationRefactoring implements Refactoring {
 	}
 
 	/**
-	 * @return the code range of the invocation to the extracted method inside the source method in the <b>child</b> commit
+	 * @return the code range(s) of the invocation(s) to the extracted method inside the source method in the <b>child</b> commit
 	 */
-	public CodeRange getExtractedOperationInvocationCodeRange() {
-		return extractedOperationInvocation.codeRange();
+	public Set<CodeRange> getExtractedOperationInvocationCodeRanges() {
+		Set<CodeRange> codeRanges = new LinkedHashSet<CodeRange>();
+		for(OperationInvocation invocation : extractedOperationInvocations) {
+			codeRanges.add(invocation.codeRange());
+		}
+		return codeRanges;
 	}
 
 	public String getName() {
@@ -175,5 +181,63 @@ public class ExtractOperationRefactoring implements Refactoring {
 		List<String> classNames = new ArrayList<String>();
 		classNames.add(getSourceOperationAfterExtraction().getClassName());
 		return classNames;
+	}
+
+	@Override
+	public List<CodeRange> leftSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(getSourceOperationCodeRangeBeforeExtraction()
+				.setDescription("source method declaration before extraction")
+				.setCodeElement(sourceOperationBeforeExtraction.toString()));
+		for(AbstractCodeFragment extractedCodeFragment : extractedCodeFragmentsFromSourceOperation) {
+			ranges.add(extractedCodeFragment.codeRange().setDescription("extracted code from source method declaration"));
+		}
+		/*
+		CodeRange extractedCodeRangeFromSourceOperation = getExtractedCodeRangeFromSourceOperation();
+		ranges.add(extractedCodeRangeFromSourceOperation.setDescription("extracted code from source method declaration"));
+		for(StatementObject statement : bodyMapper.getNonMappedLeavesT1()) {
+			if(extractedCodeRangeFromSourceOperation.subsumes(statement.codeRange())) {
+				ranges.add(statement.codeRange().
+						setDescription("deleted statement in source method declaration"));
+			}
+		}
+		for(CompositeStatementObject statement : bodyMapper.getNonMappedInnerNodesT1()) {
+			if(extractedCodeRangeFromSourceOperation.subsumes(statement.codeRange()) ||
+					extractedCodeRangeFromSourceOperation.subsumes(statement.getLeaves())) {
+				ranges.add(statement.codeRange().
+						setDescription("deleted statement in source method declaration"));
+			}
+		}
+		*/
+		return ranges;
+	}
+
+	@Override
+	public List<CodeRange> rightSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(getExtractedOperationCodeRange()
+				.setDescription("extracted method declaration")
+				.setCodeElement(extractedOperation.toString()));
+		//ranges.add(getExtractedCodeRangeToExtractedOperation().setDescription("extracted code to extracted method declaration"));
+		for(AbstractCodeFragment extractedCodeFragment : extractedCodeFragmentsToExtractedOperation) {
+			ranges.add(extractedCodeFragment.codeRange().setDescription("extracted code to extracted method declaration"));
+		}
+		ranges.add(getSourceOperationCodeRangeAfterExtraction()
+				.setDescription("source method declaration after extraction")
+				.setCodeElement(sourceOperationAfterExtraction.toString()));
+		for(OperationInvocation invocation : extractedOperationInvocations) {
+			ranges.add(invocation.codeRange()
+					.setDescription("extracted method invocation")
+					.setCodeElement(invocation.actualString()));
+		}
+		for(StatementObject statement : bodyMapper.getNonMappedLeavesT2()) {
+			ranges.add(statement.codeRange().
+					setDescription("added statement in extracted method declaration"));
+		}
+		for(CompositeStatementObject statement : bodyMapper.getNonMappedInnerNodesT2()) {
+			ranges.add(statement.codeRange().
+					setDescription("added statement in extracted method declaration"));
+		}
+		return ranges;
 	}
 }

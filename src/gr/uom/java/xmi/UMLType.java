@@ -8,7 +8,11 @@ import java.util.regex.Pattern;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Type;
 
-public class UMLType implements Serializable {
+import gr.uom.java.xmi.diff.CodeRange;
+import gr.uom.java.xmi.diff.StringDistance;
+
+public class UMLType implements Serializable, LocationInfoProvider {
+	private LocationInfo locationInfo;
     private String classType;
     private String nonQualifiedClassType;
     private String typeArguments;
@@ -24,7 +28,11 @@ public class UMLType implements Serializable {
         this.typeArgumentDecomposition = new ArrayList<String>();
     }
 
-    public String getClassType() {
+    public LocationInfo getLocationInfo() {
+		return locationInfo;
+	}
+
+	public String getClassType() {
         return classType;
     }
 
@@ -127,7 +135,7 @@ public class UMLType implements Serializable {
 		String[] tokens2 = CAMEL_CASE_SPLIT_PATTERN.split(type.nonQualifiedClassType);
 		for(String token1 : tokens1) {
 			for(String token2 : tokens2) {
-				if(token1.equals(token2) || token1.equals(token2 + "s") || token2.equals(token1 + "s")) {
+				if((token1.equals(token2) && token1.length() > 1) || token1.equals(token2 + "s") || token2.equals(token1 + "s")) {
 					return true;
 				}
 			}
@@ -150,6 +158,16 @@ public class UMLType implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(nonQualifiedClassType);
+        if(typeArguments != null)
+            sb.append(typeArguments);
+        for(int i=0; i<arrayDimension; i++)
+        	sb.append("[]");
+        return sb.toString();
+    }
+
+    public String toQualifiedString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(classType);
         if(typeArguments != null)
             sb.append(typeArguments);
         for(int i=0; i<arrayDimension; i++)
@@ -184,10 +202,18 @@ public class UMLType implements Serializable {
     	if(numberOfDots == 0 || Character.isUpperCase(name.charAt(0))) {
     		return name;
     	}
-    	if(numberOfDots > 2 && indexOfFirstUpperCaseCharacterFollowedByDot != -1) {
+    	if(numberOfDots > 1 && indexOfFirstUpperCaseCharacterFollowedByDot != -1) {
     		return name.substring(indexOfFirstUpperCaseCharacterFollowedByDot);
     	}
     	return name;
+	}
+
+	public double normalizedNameDistance(UMLType type) {
+		String s1 = this.toString();
+		String s2 = type.toString();
+		int distance = StringDistance.editDistance(s1, s2);
+		double normalized = (double)distance/(double)Math.max(s1.length(), s2.length());
+		return normalized;
 	}
 
 	public static UMLType extractTypeObject(String qualifiedName) {
@@ -214,5 +240,15 @@ public class UMLType implements Serializable {
 			}
 		}
 		return typeObject;
+	}
+
+	public static UMLType extractTypeObject(String qualifiedName, LocationInfo locationInfo) {
+		UMLType type = extractTypeObject(qualifiedName);
+		type.locationInfo = locationInfo;
+		return type;
+	}
+
+	public CodeRange codeRange() {
+		return locationInfo.codeRange();
 	}
 }
