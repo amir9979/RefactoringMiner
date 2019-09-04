@@ -21,31 +21,48 @@ RefactoringMiner is a library/API written in Java that can detect refactorings a
 
 Currently, it supports the detection of the following refactorings:
 
+**<ins>supported by RefactoringMiner 1.0 & 2.0</ins>**
+
 1. Extract Method
 2. Inline Method
 3. Rename Method
-4. Move Method/Attribute
-5. Pull Up Method/Attribute
-6. Push Down Method/Attribute
-7. Extract Class/Subclass/Superclass/Interface
-8. Move Class
-9. Rename Class
-10. Move and Rename Class
-11. Extract and Move Method
-12. Move Source Folder
-13. Change Package (Move, Rename, Split, Merge)
-14. Extract Variable
-15. Inline Variable
-16. Parameterize Variable
-17. Rename Variable/Parameter
-18. Rename Attribute
-19. Move and Rename Attribute
-20. Replace Variable with Attribute
-21. Replace Attribute (with Attribute)
-22. Merge Variable/Parameter
-23. Merge Attribute
-24. Split Variable/Parameter
-25. Split Attribute
+4. Move Method
+5. Move Attribute
+6. Pull Up Method
+7. Pull Up Attribute
+8. Push Down Method
+9. Push Down Attribute
+10. Extract Superclass
+11. Extract Interface
+12. Move Class
+13. Rename Class
+14. Extract and Move Method
+15. Change Package (Move, Rename, Split, Merge)
+
+**<ins>supported by RefactoringMiner 2.0</ins>**
+
+16. Move and Rename Class
+17. Extract Class
+18. Extract Subclass
+19. Extract Variable
+20. Inline Variable
+21. Parameterize Variable
+22. Rename Variable
+23. Rename Parameter
+24. Rename Attribute
+25. Move and Rename Attribute
+26. Replace Variable with Attribute
+27. Replace Attribute (with Attribute)
+28. Merge Variable
+29. Merge Parameter
+30. Merge Attribute
+31. Split Variable
+32. Split Parameter
+33. Split Attribute
+34. Change Variable Type
+35. Change Parameter Type
+36. Change Return Type
+37. Change Attribute Type
 
 # How to build RefactoringMiner
 
@@ -106,8 +123,11 @@ RefactoringMiner has been used in the following studies:
 14. Eman Abdullah AlOmar, Mohamed Wiem Mkaouer, and Ali Ouni, "[Can refactoring be self-affirmed?: An exploratory study on how developers document their refactoring activities in commit messages](https://dl.acm.org/citation.cfm?id=3340647)," *3rd International Workshop on Refactoring* (IWOR 2019), Montreal, QC, Canada, May 28, 2019.
 15. Ana Carla Bibiano, Eduardo Fernandes, Daniel Oliveira, Alessandro Garcia, Marcos Kalinowski, Baldoino Fonseca, Roberto Oliveira, Anderson Oliveira, and Diego Cedrim, "A Quantitative Study on Characteristics and Effect of Batch Refactoring on Code Smells," *13th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement* (ESEM 2019), Porto de Galinhas, Brazil, September 16-20, 2019.
 16. Eman Abdullah AlOmar, Mohamed Wiem Mkaouer, Ali Ouni, and Marouane Kessentini, "Do Design Metrics Capture Developers Perception of Quality? An Empirical Study on Self-Affirmed Refactoring Activities," *13th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement* (ESEM 2019), Porto de Galinhas, Brazil, September 16-20, 2019.
-17. Valentina Lenarduzzi, Nyyti Saarimäki, and Davide Taibi, "The Technical Debt Dataset," *15th International Conference on Predictive Models and Data Analytics in Software Engineering* (PROMISE 2019), Porto de Galinhas, Brazil, September 18, 2019. 
-
+17. Valentina Lenarduzzi, Nyyti Saarimäki, and Davide Taibi, "The Technical Debt Dataset," *15th International Conference on Predictive Models and Data Analytics in Software Engineering* (PROMISE 2019), Porto de Galinhas, Brazil, September 18, 2019.
+18. Anthony Peruma, "[A preliminary study of Android refactorings](http://dl.acm.org/citation.cfm?id=3340730.3340760)," *6th International Conference on Mobile Software Engineering and Systems* (MOBILESoft 2019), Montreal, Quebec, Canada, May 25-26, 2019.
+19. Anthony Peruma, Mohamed Wiem Mkaouer, Michael J. Decker, and Christian D. Newman, "Contextualizing Rename Decisions using
+Refactorings and Commit Messages," *19th IEEE International Working Conference on Source Code Analysis and Manipulation* (SCAM 2019), Cleveland, OH, USA, September 30-October 1, 2019.
+20. Willian Oizumi, Leonardo Da Silva Sousa, Anderson Oliveira, Luiz Matheus Alencar, Alessandro Garcia, Thelma E. Colanzi and Roberto Oliveira, "On the density and diversity of degradation symptoms in refactored classes: A multi-case study," *30th International Symposium on Software Reliability Engineering* (ISSRE 2019), Berlin, Germany, October 28-31, 2019.
 
 # Contributors
 The code in package **gr.uom.java.xmi.*** has been developed by [Nikolaos Tsantalis](https://github.com/tsantalis).
