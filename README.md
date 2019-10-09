@@ -63,6 +63,7 @@ Currently, it supports the detection of the following refactorings:
 35. Change Parameter Type
 36. Change Return Type
 37. Change Attribute Type
+38. Extract Attribute
 
 # How to build RefactoringMiner
 
@@ -123,11 +124,13 @@ RefactoringMiner has been used in the following studies:
 14. Eman Abdullah AlOmar, Mohamed Wiem Mkaouer, and Ali Ouni, "[Can refactoring be self-affirmed?: An exploratory study on how developers document their refactoring activities in commit messages](https://dl.acm.org/citation.cfm?id=3340647)," *3rd International Workshop on Refactoring* (IWOR 2019), Montreal, QC, Canada, May 28, 2019.
 15. Ana Carla Bibiano, Eduardo Fernandes, Daniel Oliveira, Alessandro Garcia, Marcos Kalinowski, Baldoino Fonseca, Roberto Oliveira, Anderson Oliveira, and Diego Cedrim, "A Quantitative Study on Characteristics and Effect of Batch Refactoring on Code Smells," *13th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement* (ESEM 2019), Porto de Galinhas, Brazil, September 16-20, 2019.
 16. Eman Abdullah AlOmar, Mohamed Wiem Mkaouer, Ali Ouni, and Marouane Kessentini, "Do Design Metrics Capture Developers Perception of Quality? An Empirical Study on Self-Affirmed Refactoring Activities," *13th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement* (ESEM 2019), Porto de Galinhas, Brazil, September 16-20, 2019.
-17. Valentina Lenarduzzi, Nyyti Saarimäki, and Davide Taibi, "The Technical Debt Dataset," *15th International Conference on Predictive Models and Data Analytics in Software Engineering* (PROMISE 2019), Porto de Galinhas, Brazil, September 18, 2019.
+17. Valentina Lenarduzzi, Nyyti Saarimäki, and Davide Taibi, "[The Technical Debt Dataset](https://doi.org/10.1145/3345629.3345630)," *15th International Conference on Predictive Models and Data Analytics in Software Engineering* (PROMISE 2019), Porto de Galinhas, Brazil, September 18, 2019.
 18. Anthony Peruma, "[A preliminary study of Android refactorings](http://dl.acm.org/citation.cfm?id=3340730.3340760)," *6th International Conference on Mobile Software Engineering and Systems* (MOBILESoft 2019), Montreal, Quebec, Canada, May 25-26, 2019.
 19. Anthony Peruma, Mohamed Wiem Mkaouer, Michael J. Decker, and Christian D. Newman, "Contextualizing Rename Decisions using
 Refactorings and Commit Messages," *19th IEEE International Working Conference on Source Code Analysis and Manipulation* (SCAM 2019), Cleveland, OH, USA, September 30-October 1, 2019.
 20. Willian Oizumi, Leonardo Da Silva Sousa, Anderson Oliveira, Luiz Matheus Alencar, Alessandro Garcia, Thelma E. Colanzi and Roberto Oliveira, "On the density and diversity of degradation symptoms in refactored classes: A multi-case study," *30th International Symposium on Software Reliability Engineering* (ISSRE 2019), Berlin, Germany, October 28-31, 2019.
+21. Marcos César de Oliveira, Davi Freitas, Rodrigo Bonifácio, Gustavo Pinto, and David Lo, "[Finding Needles in a Haystack: Leveraging Co-change Dependencies to Recommend Refactorings](https://doi.org/10.1016/j.jss.2019.110420)," Journal of Systems and Software, 2019.
+22. Walter Lucas, Rodrigo Bonifácio, Edna Dias Canedo, Diego Marcílio, and Fernanda Lima, "[Does the Introduction of Lambda Expressions Improve the Comprehension of Java Programs?](https://doi.org/10.1145/3350768.3350791)," *XXXIII Brazilian Symposium on Software Engineering* (SBES 2019), Salvador, Brazil, September 23-27, 2019.
 
 # Contributors
 The code in package **gr.uom.java.xmi.*** has been developed by [Nikolaos Tsantalis](https://github.com/tsantalis).
@@ -161,12 +164,11 @@ miner.detectAll(repo, "master", new RefactoringHandler() {
 });
 ```
 
-You can also analyze between commits using `detectBetweenCommits` or between tags using `detectBetweenTags`. RefactoringMiner will start from commit or tag as specified and iterate backwards. If the end commit or end tag is not specified, RefactoringMiner will detect until the first beginning.
+You can also analyze between commits using `detectBetweenCommits` or between tags using `detectBetweenTags`. RefactoringMiner will iterate through all *non-merge* commits from **start** commit/tag to **end** commit/tag.
 
 ```java
-// first commit: 819b202bfb09d4142dece04d4039f1708735019b
-// last commit: d4bce13a443cf12da40a77c16c1e591f4f985b47
-// detectBetweenCommits() will process merge commits, while detectAll() skips merge commits
+// start commit: 819b202bfb09d4142dece04d4039f1708735019b
+// end commit: d4bce13a443cf12da40a77c16c1e591f4f985b47
 miner.detectBetweenCommits(repo, 
     "819b202bfb09d4142dece04d4039f1708735019b", "d4bce13a443cf12da40a77c16c1e591f4f985b47",
     new RefactoringHandler() {
@@ -181,9 +183,8 @@ miner.detectBetweenCommits(repo,
 ```
 
 ```java
-// first tag: 1.0
-// last tag: 1.1
-// detectBetweenTags() will process merge commits, while detectAll() skips merge commits
+// start tag: 1.0
+// end tag: 1.1
 miner.detectBetweenTags(repo, "1.0", "1.1", new RefactoringHandler() {
   @Override
   public void handle(String commitId, List<Refactoring> refactorings) {

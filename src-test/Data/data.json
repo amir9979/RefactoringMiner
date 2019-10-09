@@ -1839,6 +1839,13 @@
         "validation": "TP",
         "detectionTools": "RefactoringMiner",
         "validators": null
+    }, {
+        "type": "Parameterize Variable",
+        "description": "Parameterize Variable clazz : Class to annotatedClass : Class in method private categorizeAnnotatedClass(annotatedClass Class, attributeConverterManager AttributeConverterManager) : void in class org.hibernate.boot.model.source.internal.annotations.AnnotationMetadataSourceProcessorImpl",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
     }],
     "refDiffExecutionTime": 6112
 }, {
@@ -3567,13 +3574,6 @@
     }, {
         "type": "Rename Parameter",
         "description": "Rename Parameter attributeParser : ExchangeAttributeParser to parser : ExchangeAttributeParser in method private readArrayType(string String, paramName String, value ArrayNode, parser ExchangeAttributeParser, type Class) : Object in class io.undertow.server.handlers.builder.PredicatedHandlersParser",
-        "comment": null,
-        "validation": "TP",
-        "detectionTools": "RefactoringMiner",
-        "validators": null
-    }, {
-        "type": "Rename Parameter",
-        "description": "Rename Parameter token : Token to expressionName : Token in method private handleSingleVarArgsValue(string String, expressionName Token, tokens Deque<Token>, endChar String) : Node in class io.undertow.server.handlers.builder.PredicatedHandlersParser",
         "comment": null,
         "validation": "TP",
         "detectionTools": "RefactoringMiner",
@@ -18179,6 +18179,13 @@
         "validation": "TP",
         "detectionTools": "RefactoringMiner",
         "validators": null
+    }, {
+        "type": "Extract And Move Method",
+        "description": "Extract And Move Method public killProcessGroup(uid int, pid int) : void extracted from package kill(reason String, noisy boolean) : void in class com.android.server.am.ProcessRecord & moved to class com.android.server.am.ActivityManagerService",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
     }],
     "refDiffExecutionTime": 7362
 }, {
@@ -19316,12 +19323,12 @@
         "detectionTools": "RefactoringMiner",
         "validators": null
     }, {
-        "type": "Change Return Type",
-        "description": "Change Return Type AbstractObjectAssert<?,T> to AbstractComparableAssert<?,T> in method public assertThat(actual T) : AbstractComparableAssert<?,T> in class org.assertj.core.api.Assertions",
-        "comment": "null",
-        "validation": "TP",
+        "type": "Pull Up Method",
+        "description": "Pull Up Method public assertThat(actual T) : AbstractObjectAssert<?,T> from class org.assertj.core.api.Assertions to public assertThat(actual T) : AbstractObjectAssert<?,T> from class org.assertj.core.api.StrictAssertions",
+        "comment": null,
+        "validation": "CTP",
         "detectionTools": "RefactoringMiner",
-        "validators": "Ameya"
+        "validators": null
     }],
     "refDiffExecutionTime": 0
 }, {
@@ -19434,20 +19441,6 @@
     }, {
         "type": "Extract Method",
         "description": "Extract Method private getProjectName(artifact Artifact) : String extracted from public resolve(mavenCoords String...) : void in class com.facebook.buck.maven.Resolver",
-        "comment": null,
-        "validation": "TP",
-        "detectionTools": "RefactoringMiner",
-        "validators": null
-    }, {
-        "type": "Parameterize Variable",
-        "description": "Parameterize Variable jar : Artifact to artifact : Artifact in method private resolveArtifact(artifact Artifact, repoSys RepositorySystem, session RepositorySystemSession, project Path) : Path in class com.facebook.buck.maven.Resolver",
-        "comment": null,
-        "validation": "TP",
-        "detectionTools": "RefactoringMiner",
-        "validators": null
-    }, {
-        "type": "Parameterize Variable",
-        "description": "Parameterize Variable jar : Artifact to artifact : Artifact in method private downloadSources(artifact Artifact, repoSys RepositorySystem, session RepositorySystemSession, project Path, library Prebuilt) : void in class com.facebook.buck.maven.Resolver",
         "comment": null,
         "validation": "TP",
         "detectionTools": "RefactoringMiner",
@@ -20803,20 +20796,6 @@
         "comment": null,
         "validation": "TP",
         "detectionTools": "RefactoringMiner, RefDiff",
-        "validators": null
-    }, {
-        "type": "Change Variable Type",
-        "description": "Change Variable Type treeModel : DefaultTreeModel to root : TreeNode in method public actionPerformed(e ActionEvent) : void in class org.languagetool.gui.ConfigurationDialog.getTreeButtonPanel.addActionListener",
-        "comment": "null",
-        "validation": "FP",
-        "detectionTools": "RefactoringMiner",
-        "validators": "Nikos"
-    }, {
-        "type": "Rename Variable",
-        "description": "Rename Variable treeModel : DefaultTreeModel to root : TreeNode in method public actionPerformed(e ActionEvent) : void in class org.languagetool.gui.ConfigurationDialog.getTreeButtonPanel.addActionListener",
-        "comment": null,
-        "validation": "UKN",
-        "detectionTools": "RefactoringMiner",
         "validators": null
     }],
     "refDiffExecutionTime": 876
@@ -24260,6 +24239,90 @@
         "validation": "FP",
         "detectionTools": "GumTreeDiff",
         "validators": "Nikos"
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable aShell : long to aInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable aQuick : long to aInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable bQuick : long to bInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable bMerge : long to bInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable aHeap : long to aInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable bShell : long to bInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable aMerge : long to aInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable aRadix : long to aInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable aCounting : long to aInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable bRadix : long to bInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable bCounting : long to bInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
+    }, {
+        "type": "Rename Variable",
+        "description": "Rename Variable bHeap : long to bInsertion : long in method private runTest(testable Testable, unsorted Integer[], sorted Integer[], results double[], count int) : int in class com.jwetherell.algorithms.sorts.timing.SortsTiming",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
     }],
     "refDiffExecutionTime": 644
 }, {
@@ -35760,10 +35823,10 @@
     }, {
         "type": "Extract And Move Method",
         "description": "Extract And Move Method public setCli(cli CLI) : void extracted from public JdrRunner(protocol String, user String, pass String, host String, port String) in class org.jboss.as.jdr.JdrRunner & moved to class org.jboss.as.jdr.commands.JdrEnvironment",
-        "comment": null,
-        "validation": "UKN",
+        "comment": "null",
+        "validation": "FP",
         "detectionTools": "RefactoringMiner",
-        "validators": null
+        "validators": "Nikos"
     }],
     "refDiffExecutionTime": 0
 }, {
@@ -39711,6 +39774,13 @@
         "validation": "FP",
         "detectionTools": "GumTreeDiff",
         "validators": "Nikos"
+    }, {
+        "type": "Extract Attribute",
+        "description": "Extract Attribute private DATE_TIME_PATTERN : String in class com.spotify.helios.cli.command.DeploymentGroupWatchCommand",
+        "comment": "null",
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": "Nikos"
     }],
     "refDiffExecutionTime": 0
 }, {
@@ -40615,6 +40685,13 @@
         "comment": "null",
         "validation": "FP",
         "detectionTools": "GumTreeDiff",
+        "validators": "Nikos"
+    }, {
+        "type": "Extract Attribute",
+        "description": "Extract Attribute private live : boolean in class com.hazelcast.test.TestNodeRegistry.MockConnection",
+        "comment": "null",
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
         "validators": "Nikos"
     }],
     "refDiffExecutionTime": 4170
@@ -42972,6 +43049,13 @@
         "validation": "TP",
         "detectionTools": "RefactoringMiner, GumTreeDiff",
         "validators": "Ameya"
+    }, {
+        "type": "Parameterize Variable",
+        "description": "Parameterize Variable clazz : Class<? extends PersistentObject> to persistentObjectClass : Class<? extends PersistentObject> in method protected flushPersistentObjects(persistentObjectClass Class<? extends PersistentObject>, persistentObjectsToInsert List<PersistentObject>) : void in class org.activiti.engine.impl.db.DbSqlSession",
+        "comment": null,
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": null
     }],
     "refDiffExecutionTime": 2159
 }, {
@@ -47082,7 +47166,7 @@
         "description": "Move Method protected createMainModule(moduleType ModuleType) : Module from class com.intellij.testFramework.LightPlatformTestCase to public createMainModule(project Project) : Module from class com.intellij.testFramework.LightProjectDescriptor",
         "comment": null,
         "validation": "TP",
-        "detectionTools": "RefDiff",
+        "detectionTools": "RefactoringMiner, RefDiff",
         "validators": "Matin"
     }, {
         "type": "Extract and Move Method",
@@ -56723,6 +56807,13 @@
         "validation": "FP",
         "detectionTools": "GumTreeDiff",
         "validators": "Nikos"
+    }, {
+        "type": "Split Parameter",
+        "description": "Split Parameter node : LambdaExpression to [isCapturing : boolean, parameters : List<VariableDeclaration>] in method public printLambdaCallBlocks(functionalInterface IMethodBinding, parameters List<VariableDeclaration>, isCapturing boolean) : void in class com.google.devtools.j2objc.gen.StatementGenerator",
+        "comment": "null",
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": "Nikos"
     }],
     "refDiffExecutionTime": 2057
 }, {
@@ -60260,6 +60351,13 @@
         "validation": "FP",
         "detectionTools": "GumTreeDiff",
         "validators": null
+    }, {
+        "type": "Extract Attribute",
+        "description": "Extract Attribute private EMPTY : String in class com.linkedin.r2.filter.compression.ServerCompressionFilter",
+        "comment": "null",
+        "validation": "TP",
+        "detectionTools": "RefactoringMiner",
+        "validators": "Nikos"
     }],
     "refDiffExecutionTime": 3301
 }, {

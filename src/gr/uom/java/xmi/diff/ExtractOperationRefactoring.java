@@ -66,6 +66,10 @@ public class ExtractOperationRefactoring implements Refactoring {
 		sb.append(sourceOperationBeforeExtraction);
 		sb.append(" in class ");
 		sb.append(getClassName());
+		if(getRefactoringType().equals(RefactoringType.EXTRACT_AND_MOVE_OPERATION)) {
+			sb.append(" & moved to class ");
+			sb.append(extractedOperation.getClassName());
+		}
 		return sb.toString();
 	}
 
@@ -80,6 +84,9 @@ public class ExtractOperationRefactoring implements Refactoring {
 	}
 
 	private String getClassName() {
+		if(getRefactoringType().equals(RefactoringType.EXTRACT_AND_MOVE_OPERATION)) {
+			return getSourceOperationBeforeExtraction().getClassName();
+		}
 		String sourceClassName = getSourceOperationBeforeExtraction().getClassName();
 		String targetClassName = getSourceOperationAfterExtraction().getClassName();
 		return sourceClassName.equals(targetClassName) ? sourceClassName : targetClassName;
@@ -168,6 +175,8 @@ public class ExtractOperationRefactoring implements Refactoring {
 	}
 
 	public RefactoringType getRefactoringType() {
+		if(!getSourceOperationAfterExtraction().getClassName().equals(getExtractedOperation().getClassName()))
+			return RefactoringType.EXTRACT_AND_MOVE_OPERATION;
 		return RefactoringType.EXTRACT_OPERATION;
 	}
 

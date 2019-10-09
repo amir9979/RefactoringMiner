@@ -617,6 +617,14 @@ public abstract class UMLClassBaseDiff implements Comparable<UMLClassBaseDiff> {
 			if(!multipleExtractedMethodInvocationsWithDifferentAttributesAsArguments(candidate, refactorings)) {
 				String before = PrefixSuffixUtils.normalize(candidate.getOriginalVariableName());
 				String after = PrefixSuffixUtils.normalize(candidate.getRenamedVariableName());
+				if(before.contains(".") && after.contains(".")) {
+					String prefix1 = before.substring(0, before.lastIndexOf(".") + 1);
+					String prefix2 = after.substring(0, after.lastIndexOf(".") + 1);
+					if(prefix1.equals(prefix2)) {
+						before = before.substring(prefix1.length(), before.length());
+						after = after.substring(prefix2.length(), after.length());
+					}
+				}
 				Replacement renamePattern = new Replacement(before, after, ReplacementType.VARIABLE_NAME);
 				if(renameMap.containsKey(renamePattern)) {
 					renameMap.get(renamePattern).add(candidate);
@@ -1549,7 +1557,7 @@ public abstract class UMLClassBaseDiff implements Comparable<UMLClassBaseDiff> {
 						for(int i=0; i<size; i++) {
 							parameterToArgumentMap.put(parameters.get(i), arguments.get(i));
 						}
-						UMLOperationBodyMapper operationBodyMapper = new UMLOperationBodyMapper(removedOperation, mapper, parameterToArgumentMap);
+						UMLOperationBodyMapper operationBodyMapper = new UMLOperationBodyMapper(removedOperation, mapper, parameterToArgumentMap, this);
 						if(inlineMatchCondition(operationBodyMapper)) {
 							InlineOperationRefactoring inlineOperationRefactoring =	new InlineOperationRefactoring(operationBodyMapper, mapper.getOperation1(), removedOperationInvocations);
 							refactorings.add(inlineOperationRefactoring);
@@ -1609,8 +1617,8 @@ public abstract class UMLClassBaseDiff implements Comparable<UMLClassBaseDiff> {
 		for(Iterator<UMLOperation> addedOperationIterator = addedOperations.iterator(); addedOperationIterator.hasNext();) {
 			UMLOperation addedOperation = addedOperationIterator.next();
 			for(UMLOperationBodyMapper mapper : getOperationBodyMapperList()) {
-				ExtractOperationDetection detection = new ExtractOperationDetection(addedOperations, modelDiff);
-				List<ExtractOperationRefactoring> refs = detection.check(mapper, addedOperation);
+				ExtractOperationDetection detection = new ExtractOperationDetection(mapper, addedOperations, this, modelDiff);
+				List<ExtractOperationRefactoring> refs = detection.check(addedOperation);
 				for(ExtractOperationRefactoring refactoring : refs) {
 					refactorings.add(refactoring);
 					UMLOperationBodyMapper operationBodyMapper = refactoring.getBodyMapper();

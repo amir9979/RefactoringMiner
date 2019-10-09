@@ -196,11 +196,12 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 	}
 
 	public UMLOperationBodyMapper(UMLOperationBodyMapper operationBodyMapper, UMLOperation addedOperation,
-			Map<String, String> parameterToArgumentMap1, Map<String, String> parameterToArgumentMap2) throws RefactoringMinerTimedOutException {
+			Map<String, String> parameterToArgumentMap1, Map<String, String> parameterToArgumentMap2, UMLClassBaseDiff classDiff) throws RefactoringMinerTimedOutException {
 		this.parentMapper = operationBodyMapper;
 		this.operation1 = operationBodyMapper.operation1;
 		this.callSiteOperation = operationBodyMapper.operation2;
 		this.operation2 = addedOperation;
+		this.classDiff = classDiff;
 		this.mappings = new LinkedHashSet<AbstractCodeMapping>();
 		this.nonMappedLeavesT1 = new ArrayList<StatementObject>();
 		this.nonMappedLeavesT2 = new ArrayList<StatementObject>();
@@ -358,11 +359,12 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 	}
 
 	public UMLOperationBodyMapper(UMLOperation removedOperation, UMLOperationBodyMapper operationBodyMapper,
-			Map<String, String> parameterToArgumentMap) throws RefactoringMinerTimedOutException {
+			Map<String, String> parameterToArgumentMap, UMLClassBaseDiff classDiff) throws RefactoringMinerTimedOutException {
 		this.parentMapper = operationBodyMapper;
 		this.operation1 = removedOperation;
 		this.operation2 = operationBodyMapper.operation2;
 		this.callSiteOperation = operationBodyMapper.operation1;
+		this.classDiff = classDiff;
 		this.mappings = new LinkedHashSet<AbstractCodeMapping>();
 		this.nonMappedLeavesT1 = new ArrayList<StatementObject>();
 		this.nonMappedLeavesT2 = new ArrayList<StatementObject>();
@@ -473,8 +475,7 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 	}
 
 	public Set<Refactoring> getRefactorings() {
-		UMLOperationDiff operationDiff = classDiff != null ? classDiff.getOperationDiff(operation1, operation2) : null;
-		VariableReplacementAnalysis analysis = new VariableReplacementAnalysis(this, refactorings, operationDiff);
+		VariableReplacementAnalysis analysis = new VariableReplacementAnalysis(this, refactorings, classDiff);
 		refactorings.addAll(analysis.getVariableRenames());
 		refactorings.addAll(analysis.getVariableMerges());
 		refactorings.addAll(analysis.getVariableSplits());
@@ -1947,8 +1948,9 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 		//method invocation has been renamed and arguments changed, but the expressions are identical
 		if(invocationCoveringTheEntireStatement1 != null && invocationCoveringTheEntireStatement2 != null &&
 				invocationCoveringTheEntireStatement1.renamedWithIdenticalExpressionAndDifferentNumberOfArguments(invocationCoveringTheEntireStatement2, replacementInfo.getReplacements(), UMLClassBaseDiff.MAX_OPERATION_NAME_DISTANCE)) {
+			ReplacementType type = invocationCoveringTheEntireStatement1.getName().equals(invocationCoveringTheEntireStatement2.getName()) ? ReplacementType.METHOD_INVOCATION_ARGUMENT : ReplacementType.METHOD_INVOCATION_NAME_AND_ARGUMENT;
 			Replacement replacement = new MethodInvocationReplacement(invocationCoveringTheEntireStatement1.getName(),
-					invocationCoveringTheEntireStatement2.getName(), invocationCoveringTheEntireStatement1, invocationCoveringTheEntireStatement2, ReplacementType.METHOD_INVOCATION_NAME_AND_ARGUMENT);
+					invocationCoveringTheEntireStatement2.getName(), invocationCoveringTheEntireStatement1, invocationCoveringTheEntireStatement2, type);
 			replacementInfo.addReplacement(replacement);
 			return replacementInfo.getReplacements();
 		}
@@ -1956,8 +1958,9 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 			for(String methodInvocation1 : methodInvocations1) {
 				for(AbstractCall operationInvocation1 : methodInvocationMap1.get(methodInvocation1)) {
 					if(operationInvocation1.renamedWithIdenticalExpressionAndDifferentNumberOfArguments(invocationCoveringTheEntireStatement2, replacementInfo.getReplacements(), UMLClassBaseDiff.MAX_OPERATION_NAME_DISTANCE)) {
+						ReplacementType type = operationInvocation1.getName().equals(invocationCoveringTheEntireStatement2.getName()) ? ReplacementType.METHOD_INVOCATION_ARGUMENT : ReplacementType.METHOD_INVOCATION_NAME_AND_ARGUMENT;
 						Replacement replacement = new MethodInvocationReplacement(operationInvocation1.getName(),
-								invocationCoveringTheEntireStatement2.getName(), (OperationInvocation)operationInvocation1, invocationCoveringTheEntireStatement2, ReplacementType.METHOD_INVOCATION_NAME_AND_ARGUMENT);
+								invocationCoveringTheEntireStatement2.getName(), (OperationInvocation)operationInvocation1, invocationCoveringTheEntireStatement2, type);
 						replacementInfo.addReplacement(replacement);
 						return replacementInfo.getReplacements();
 					}
@@ -2395,18 +2398,15 @@ public class UMLOperationBodyMapper implements Comparable<UMLOperationBodyMapper
 					}
 				}
 			}
-			UMLAnonymousClass anonymous = null;
+			List<UMLOperation> anonymousOperations = new ArrayList<UMLOperation>();
 			for(AnonymousClassDeclarationObject anonymousObject : statement.getAnonymousClassDeclarations()) {
 				for(UMLAnonymousClass anonymousClass : operation.getAnonymousClassList()) {
 					if(anonymousClass.getLocationInfo().equals(anonymousObject.getLocationInfo())) {
-						anonymous = anonymousClass;
-						break;
+						anonymousOperations.addAll(anonymousClass.getOperations());
 					}
 				}
-				if(anonymous != null)
-					break;
 			}
-			for(UMLOperation anonymousOperation : anonymous.getOperations()) {
+			for(UMLOperation anonymousOperation : anonymousOperations) {
 				OperationBody body = anonymousOperation.getBody();
 				if(body != null) {
 					List<StatementObject> leaves = body.getCompositeStatement().getLeaves();
