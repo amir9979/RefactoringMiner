@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
@@ -14,21 +15,37 @@ import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
+import gr.uom.java.xmi.LocationInfo;
+import gr.uom.java.xmi.LocationInfo.CodeElementType;
+import gr.uom.java.xmi.diff.CodeRange;
+
 public class StatementObject extends AbstractStatement {
 	
 	private String statement;
+	private LocationInfo locationInfo;
 	private List<String> variables;
 	private List<String> types;
 	private List<VariableDeclaration> variableDeclarations;
-	private Map<String, OperationInvocation> methodInvocationMap;
-	private List<String> anonymousClassDeclarations;
+	private Map<String, List<OperationInvocation>> methodInvocationMap;
+	private List<AnonymousClassDeclarationObject> anonymousClassDeclarations;
 	private List<String> stringLiterals;
-	private Map<String, ObjectCreation> creationMap;
+	private List<String> numberLiterals;
+	private List<String> nullLiterals;
+	private List<String> booleanLiterals;
+	private List<String> typeLiterals;
+	private Map<String, List<ObjectCreation>> creationMap;
 	private List<String> infixOperators;
+	private List<String> arrayAccesses;
+	private List<String> prefixExpressions;
+	private List<String> postfixExpressions;
+	private List<String> arguments;
+	private List<TernaryOperatorExpression> ternaryOperatorExpressions;
+	private List<LambdaExpressionObject> lambdas;
 	
-	public StatementObject(Statement statement, int depth) {
+	public StatementObject(CompilationUnit cu, String filePath, Statement statement, int depth, CodeElementType codeElementType) {
 		super();
-		Visitor visitor = new Visitor();
+		this.locationInfo = new LocationInfo(cu, filePath, statement, codeElementType);
+		Visitor visitor = new Visitor(cu, filePath);
 		statement.accept(visitor);
 		this.variables = visitor.getVariables();
 		this.types = visitor.getTypes();
@@ -36,10 +53,20 @@ public class StatementObject extends AbstractStatement {
 		this.methodInvocationMap = visitor.getMethodInvocationMap();
 		this.anonymousClassDeclarations = visitor.getAnonymousClassDeclarations();
 		this.stringLiterals = visitor.getStringLiterals();
+		this.numberLiterals = visitor.getNumberLiterals();
+		this.nullLiterals = visitor.getNullLiterals();
+		this.booleanLiterals = visitor.getBooleanLiterals();
+		this.typeLiterals = visitor.getTypeLiterals();
 		this.creationMap = visitor.getCreationMap();
 		this.infixOperators = visitor.getInfixOperators();
+		this.arrayAccesses = visitor.getArrayAccesses();
+		this.prefixExpressions = visitor.getPrefixExpressions();
+		this.postfixExpressions = visitor.getPostfixExpressions();
+		this.arguments = visitor.getArguments();
+		this.ternaryOperatorExpressions = visitor.getTernaryOperatorExpressions();
+		this.lambdas = visitor.getLambdas();
 		setDepth(depth);
-		if(statement.toString().matches("!(\\w|\\.)*@\\w*")) {
+		if(Visitor.METHOD_INVOCATION_PATTERN.matcher(statement.toString()).matches()) {
 			if(statement instanceof VariableDeclarationStatement) {
 				VariableDeclarationStatement variableDeclarationStatement = (VariableDeclarationStatement)statement;
 				StringBuilder sb = new StringBuilder();
@@ -137,12 +164,12 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
-	public Map<String, OperationInvocation> getMethodInvocationMap() {
+	public Map<String, List<OperationInvocation>> getMethodInvocationMap() {
 		return methodInvocationMap;
 	}
 
 	@Override
-	public List<String> getAnonymousClassDeclarations() {
+	public List<AnonymousClassDeclarationObject> getAnonymousClassDeclarations() {
 		return anonymousClassDeclarations;
 	}
 
@@ -152,7 +179,27 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
-	public Map<String, ObjectCreation> getCreationMap() {
+	public List<String> getNumberLiterals() {
+		return numberLiterals;
+	}
+
+	@Override
+	public List<String> getNullLiterals() {
+		return nullLiterals;
+	}
+
+	@Override
+	public List<String> getBooleanLiterals() {
+		return booleanLiterals;
+	}
+
+	@Override
+	public List<String> getTypeLiterals() {
+		return typeLiterals;
+	}
+
+	@Override
+	public Map<String, List<ObjectCreation>> getCreationMap() {
 		return creationMap;
 	}
 
@@ -162,7 +209,55 @@ public class StatementObject extends AbstractStatement {
 	}
 
 	@Override
+	public List<String> getArrayAccesses() {
+		return arrayAccesses;
+	}
+
+	@Override
+	public List<String> getPrefixExpressions() {
+		return prefixExpressions;
+	}
+
+	@Override
+	public List<String> getPostfixExpressions() {
+		return postfixExpressions;
+	}
+
+	@Override
+	public List<String> getArguments() {
+		return arguments;
+	}
+
+	@Override
+	public List<TernaryOperatorExpression> getTernaryOperatorExpressions() {
+		return ternaryOperatorExpressions;
+	}
+
+	@Override
+	public List<LambdaExpressionObject> getLambdas() {
+		return lambdas;
+	}
+
+	@Override
 	public int statementCount() {
 		return 1;
+	}
+
+	public LocationInfo getLocationInfo() {
+		return locationInfo;
+	}
+
+	public CodeRange codeRange() {
+		return locationInfo.codeRange();
+	}
+
+	public VariableDeclaration getVariableDeclaration(String variableName) {
+		List<VariableDeclaration> variableDeclarations = getVariableDeclarations();
+		for(VariableDeclaration declaration : variableDeclarations) {
+			if(declaration.getVariableName().equals(variableName)) {
+				return declaration;
+			}
+		}
+		return null;
 	}
 }

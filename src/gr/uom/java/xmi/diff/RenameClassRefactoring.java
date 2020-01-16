@@ -1,23 +1,29 @@
 package gr.uom.java.xmi.diff;
 
+import gr.uom.java.xmi.UMLClass;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringType;
 
 public class RenameClassRefactoring implements Refactoring {
-	private String originalClassName;
-	private String renamedClassName;
+
+	private UMLClass originalClass;
+	private UMLClass renamedClass;
 	
-	public RenameClassRefactoring(String originalClassName,  String renamedClassName) {
-		this.originalClassName = originalClassName;
-		this.renamedClassName = renamedClassName;
+	public RenameClassRefactoring(UMLClass originalClass,  UMLClass renamedClass) {
+		this.originalClass = originalClass;
+		this.renamedClass = renamedClass;
 	}
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getName()).append("\t");
-		sb.append(originalClassName);
+		sb.append(originalClass.getName());
 		sb.append(" renamed to ");
-		sb.append(renamedClassName);
+		sb.append(renamedClass.getName());
 		return sb.toString();
 	}
 
@@ -30,11 +36,48 @@ public class RenameClassRefactoring implements Refactoring {
 	}
 
 	public String getOriginalClassName() {
-		return originalClassName;
+		return originalClass.getName();
 	}
 
 	public String getRenamedClassName() {
-		return renamedClassName;
+		return renamedClass.getName();
 	}
-	
+
+	public UMLClass getOriginalClass() {
+		return originalClass;
+	}
+
+	public UMLClass getRenamedClass() {
+		return renamedClass;
+	}
+
+	public List<String> getInvolvedClassesBeforeRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		classNames.add(getOriginalClass().getName());
+		return classNames;
+	}
+
+	public List<String> getInvolvedClassesAfterRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		classNames.add(getRenamedClass().getName());
+		return classNames;
+	}
+
+	@Override
+	public List<CodeRange> leftSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(originalClass.codeRange()
+				.setDescription("original type declaration")
+				.setCodeElement(originalClass.getName()));
+		return ranges;
+	}
+
+	@Override
+	public List<CodeRange> rightSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(renamedClass.codeRange()
+				.setDescription("renamed type declaration")
+				.setCodeElement(renamedClass.getName()));
+		return ranges;
+	}
 }

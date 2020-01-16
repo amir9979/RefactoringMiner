@@ -5,21 +5,24 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 
+import gr.uom.java.xmi.LocationInfo;
+import gr.uom.java.xmi.LocationInfo.CodeElementType;
 import gr.uom.java.xmi.UMLType;
+import gr.uom.java.xmi.diff.StringDistance;
 
-public class ObjectCreation {
+public class ObjectCreation extends AbstractCall {
 	private UMLType type;
-	private int typeArguments;
-	private String expression;
 	private String anonymousClassDeclaration;
-	private List<String> arguments;
 	private boolean isArray = false;
 	private volatile int hashCode = 0;
 	
-	public ObjectCreation(ClassInstanceCreation creation) {
-		this.type = UMLType.extractTypeObject(creation.getType().toString());
+	public ObjectCreation(CompilationUnit cu, String filePath, ClassInstanceCreation creation) {
+		this.locationInfo = new LocationInfo(cu, filePath, creation, CodeElementType.CLASS_INSTANCE_CREATION);
+		this.type = UMLType.extractTypeObject(creation.getType().toString(),
+				new LocationInfo(cu, filePath, creation.getType(), CodeElementType.TYPE));
 		this.typeArguments = creation.arguments().size();
 		this.arguments = new ArrayList<String>();
 		List<Expression> args = creation.arguments();
@@ -34,9 +37,11 @@ public class ObjectCreation {
 		}
 	}
 
-	public ObjectCreation(ArrayCreation creation) {
+	public ObjectCreation(CompilationUnit cu, String filePath, ArrayCreation creation) {
+		this.locationInfo = new LocationInfo(cu, filePath, creation, CodeElementType.ARRAY_CREATION);
 		this.isArray = true;
-		this.type = UMLType.extractTypeObject(creation.getType().toString());
+		this.type = UMLType.extractTypeObject(creation.getType().toString(),
+				new LocationInfo(cu, filePath, creation.getType(), CodeElementType.TYPE));
 		this.typeArguments = creation.dimensions().size();
 		this.arguments = new ArrayList<String>();
 		List<Expression> args = creation.dimensions();
@@ -48,16 +53,12 @@ public class ObjectCreation {
 		}
 	}
 
+	public String getName() {
+		return getType().toString();
+	}
+
 	public UMLType getType() {
 		return type;
-	}
-
-	public String getExpression() {
-		return expression;
-	}
-
-    public List<String> getArguments() {
-		return arguments;
 	}
 
 	public boolean isArray() {
@@ -66,6 +67,18 @@ public class ObjectCreation {
 
 	public String getAnonymousClassDeclaration() {
 		return anonymousClassDeclaration;
+	}
+
+	private ObjectCreation() {
+		
+	}
+
+	public ObjectCreation update(String oldExpression, String newExpression) {
+		ObjectCreation newObjectCreation = new ObjectCreation();
+		newObjectCreation.type = this.type;
+		newObjectCreation.locationInfo = this.locationInfo;
+		update(newObjectCreation, oldExpression, newExpression);
+		return newObjectCreation;
 	}
 
 	public boolean equals(Object o) {
@@ -104,4 +117,28 @@ public class ObjectCreation {
     	}
     	return hashCode;
     }
+
+    public boolean identicalArrayInitializer(ObjectCreation other) {
+    	if(this.isArray && other.isArray) {
+    		if(this.anonymousClassDeclaration != null && other.anonymousClassDeclaration != null) {
+    			return this.anonymousClassDeclaration.equals(other.anonymousClassDeclaration);
+    		}
+    		else if(this.anonymousClassDeclaration == null && other.anonymousClassDeclaration == null) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+
+	public double normalizedNameDistance(AbstractCall call) {
+		String s1 = getType().toString().toLowerCase();
+		String s2 = ((ObjectCreation)call).getType().toString().toLowerCase();
+		int distance = StringDistance.editDistance(s1, s2);
+		double normalized = (double)distance/(double)Math.max(s1.length(), s2.length());
+		return normalized;
+	}
+
+	public boolean identicalName(AbstractCall call) {
+		return getType().equals(((ObjectCreation)call).getType());
+	}
 }

@@ -36,10 +36,10 @@ public class MoveSourceFolderRefactoring implements Refactoring {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getName()).append("\t");
-		String originalPath = pattern.getOriginalPath().endsWith("/") ? pattern.getOriginalPath().substring(0, pattern.getOriginalPath().length()-1) : pattern.getOriginalPath();
+		String originalPath = pattern.getBefore().endsWith("/") ? pattern.getBefore().substring(0, pattern.getBefore().length()-1) : pattern.getBefore();
 		sb.append(originalPath);
 		sb.append(" to ");
-		String movedPath = pattern.getMovedPath().endsWith("/") ? pattern.getMovedPath().substring(0, pattern.getMovedPath().length()-1) : pattern.getMovedPath();
+		String movedPath = pattern.getAfter().endsWith("/") ? pattern.getAfter().substring(0, pattern.getAfter().length()-1) : pattern.getAfter();
 		sb.append(movedPath);
 		return sb.toString();
 	}
@@ -51,5 +51,42 @@ public class MoveSourceFolderRefactoring implements Refactoring {
 	public RefactoringType getRefactoringType() {
 		return RefactoringType.MOVE_SOURCE_FOLDER;
 	}
-	
+
+	public List<String> getInvolvedClassesBeforeRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		for(MovedClassToAnotherSourceFolder ref : movedClassesToAnotherSourceFolder) {
+			classNames.add(ref.getOriginalClassName());
+		}
+		return classNames;
+	}
+
+	public List<String> getInvolvedClassesAfterRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		for(MovedClassToAnotherSourceFolder ref : movedClassesToAnotherSourceFolder) {
+			classNames.add(ref.getMovedClassName());
+		}
+		return classNames;
+	}
+
+	@Override
+	public List<CodeRange> leftSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		for(MovedClassToAnotherSourceFolder ref : movedClassesToAnotherSourceFolder) {
+			ranges.add(ref.getOriginalClass().codeRange()
+					.setDescription("original type declaration")
+					.setCodeElement(ref.getOriginalClass().getName()));
+		}
+		return ranges;
+	}
+
+	@Override
+	public List<CodeRange> rightSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		for(MovedClassToAnotherSourceFolder ref : movedClassesToAnotherSourceFolder) {
+			ranges.add(ref.getMovedClass().codeRange()
+					.setDescription("moved type declaration")
+					.setCodeElement(ref.getMovedClass().getName()));
+		}
+		return ranges;
+	}
 }

@@ -1,48 +1,40 @@
 package gr.uom.java.xmi.diff;
 
+import gr.uom.java.xmi.UMLClass;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringType;
+import org.refactoringminer.util.PrefixSuffixUtils;
 
 public class MoveClassRefactoring implements Refactoring {
-	private String originalClassName;
-	private String movedClassName;
+	private UMLClass originalClass;
+	private UMLClass movedClass;
 	
-	public MoveClassRefactoring(String originalClassName,  String movedClassName) {
-		this.originalClassName = originalClassName;
-		this.movedClassName = movedClassName;
+	public MoveClassRefactoring(UMLClass originalClass,  UMLClass movedClass) {
+		this.originalClass = originalClass;
+		this.movedClass = movedClass;
 	}
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getName()).append("\t");
-		sb.append(originalClassName);
+		sb.append(originalClass.getName());
 		sb.append(" moved to ");
-		sb.append(movedClassName);
+		sb.append(movedClass.getName());
 		return sb.toString();
 	}
 
 	public RenamePattern getRenamePattern() {
-		int separatorPos = separatorPosOfCommonSuffix('.', originalClassName, movedClassName);
-		String originalPath = originalClassName.substring(0, originalClassName.length() - separatorPos);
-		String movedPath = movedClassName.substring(0, movedClassName.length() - separatorPos);
-		return new RenamePattern(originalPath, movedPath);
-	}
-
-	private int separatorPosOfCommonSuffix(char separator, String s1, String s2) {
-		int l1 = s1.length();
-		int l2 = s2.length();
-		int separatorPos = -1; 
-		int lmin = Math.min(s1.length(), s2.length());
-		boolean equal = true;
-		for (int i = 0; i < lmin; i++) {
-			char c1 = s1.charAt(l1 - i - 1);
-			char c2 = s2.charAt(l2 - i - 1);
-			equal = equal && c1 == c2;
-			if (equal && c1 == separator) {
-				separatorPos = i;
-			}
+		int separatorPos = PrefixSuffixUtils.separatorPosOfCommonSuffix('.', originalClass.getName(), movedClass.getName());
+		if (separatorPos == -1) {
+			return new RenamePattern(originalClass.getName(), movedClass.getName());
 		}
-		return separatorPos;
+		String originalPath = originalClass.getName().substring(0, originalClass.getName().length() - separatorPos);
+		String movedPath = movedClass.getName().substring(0, movedClass.getName().length() - separatorPos);
+		return new RenamePattern(originalPath, movedPath);
 	}
 
 	public String getName() {
@@ -54,11 +46,48 @@ public class MoveClassRefactoring implements Refactoring {
 	}
 
 	public String getOriginalClassName() {
-		return originalClassName;
+		return originalClass.getName();
 	}
 
 	public String getMovedClassName() {
-		return movedClassName;
+		return movedClass.getName();
 	}
-	
+
+	public UMLClass getOriginalClass() {
+		return originalClass;
+	}
+
+	public UMLClass getMovedClass() {
+		return movedClass;
+	}
+
+	public List<String> getInvolvedClassesBeforeRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		classNames.add(getOriginalClass().getName());
+		return classNames;
+	}
+
+	public List<String> getInvolvedClassesAfterRefactoring() {
+		List<String> classNames = new ArrayList<String>();
+		classNames.add(getMovedClass().getName());
+		return classNames;
+	}
+
+	@Override
+	public List<CodeRange> leftSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(originalClass.codeRange()
+				.setDescription("original type declaration")
+				.setCodeElement(originalClass.getName()));
+		return ranges;
+	}
+
+	@Override
+	public List<CodeRange> rightSide() {
+		List<CodeRange> ranges = new ArrayList<CodeRange>();
+		ranges.add(movedClass.codeRange()
+				.setDescription("moved type declaration")
+				.setCodeElement(movedClass.getName()));
+		return ranges;
+	}
 }

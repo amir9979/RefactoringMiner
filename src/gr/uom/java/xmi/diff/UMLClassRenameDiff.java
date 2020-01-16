@@ -2,28 +2,18 @@ package gr.uom.java.xmi.diff;
 
 import gr.uom.java.xmi.UMLClass;
 
-public class UMLClassRenameDiff implements Comparable<UMLClassRenameDiff> {
-	private UMLClass originalClass;
-	private UMLClass renamedClass;
+public class UMLClassRenameDiff extends UMLClassBaseDiff {
 	
-	public UMLClassRenameDiff(UMLClass originalClass, UMLClass renamedClass) {
-		this.originalClass = originalClass;
-		this.renamedClass = renamedClass;
-	}
-
-	public UMLClass getOriginalClass() {
-		return originalClass;
+	public UMLClassRenameDiff(UMLClass originalClass, UMLClass renamedClass, UMLModelDiff modelDiff) {
+		super(originalClass, renamedClass, modelDiff);
 	}
 
 	public UMLClass getRenamedClass() {
-		return renamedClass;
+		return nextClass;
 	}
 
-	//return true if "classMoveDiff" represents the move of a class that is inner to this.originalClass
-	public boolean isInnerClassMove(UMLClassMoveDiff classMoveDiff) {
-		if(this.originalClass.isInnerClass(classMoveDiff.getOriginalClass()) && this.renamedClass.isInnerClass(classMoveDiff.getMovedClass()))
-			return true;
-		return false;
+	public boolean samePackage() {
+		return originalClass.getPackageName().equals(nextClass.getPackageName());
 	}
 
 	public String toString() {
@@ -31,12 +21,8 @@ public class UMLClassRenameDiff implements Comparable<UMLClassRenameDiff> {
 		sb.append("class ");
 		sb.append(originalClass.getName());
 		sb.append(" was renamed to ");
-		sb.append(renamedClass.getName());
+		sb.append(nextClass.getName());
 		sb.append("\n");
 		return sb.toString();
-	}
-
-	public int compareTo(UMLClassRenameDiff other) {
-		return this.originalClass.getName().compareTo(other.originalClass.getName());
 	}
 }

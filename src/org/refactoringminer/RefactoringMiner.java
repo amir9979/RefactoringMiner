@@ -1,10 +1,5 @@
 package org.refactoringminer;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 import org.eclipse.jgit.lib.Repository;
@@ -37,6 +32,10 @@ public class RefactoringMiner {
 			detectBetweenTags(args);
 		} else if (option.equalsIgnoreCase("-c")) {
 			detectAtCommit(args);
+		} else if (option.equalsIgnoreCase("-gc")) {
+			detectAtGitHubCommit(args);
+		} else if (option.equalsIgnoreCase("-gp")) {
+			detectAtGitHubPullRequest(args);
 		} else {
 			throw argumentException();
 		}
@@ -53,32 +52,25 @@ public class RefactoringMiner {
 		}
 		GitService gitService = new GitServiceImpl();
 		try (Repository repo = gitService.openRepository(folder)) {
-			Path folderPath = Paths.get(folder);
-			String fileName = (branch == null) ? "all_refactorings.csv" : "all_refactorings_" + branch + ".csv";
-			String filePath = folderPath.toString() + "/" + fileName;
-			Files.deleteIfExists(Paths.get(filePath));
-			saveToFile(filePath, getResultHeader());
-
+			String gitURL = repo.getConfig().getString("remote", "origin", "url");
 			GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+			StringBuilder sb = new StringBuilder();
+			startJSON(sb);
 			detector.detectAll(repo, branch, new RefactoringHandler() {
+				private int commitCount = 0;
 				@Override
 				public void handle(String commitId, List<Refactoring> refactorings) {
-					if (refactorings.isEmpty()) {
-						System.out.println("No refactorings found in commit " + commitId);
-					} else {
-						System.out.println(refactorings.size() + " refactorings found in commit " + commitId);
-
-						for (Refactoring ref : refactorings) {
-							saveToFile(filePath, getResultRefactoringDescription(commitId, ref));
-						}
+					if(commitCount > 0) {
+						sb.append(",").append("\n");
 					}
+					commitJSON(sb, gitURL, commitId, refactorings);
+					commitCount++;
 				}
 
 				@Override
 				public void onFinish(int refactoringsCount, int commitsCount, int errorCommitsCount) {
-					System.out.println("Finish mining, result is saved to file: " + filePath);
-					System.out.println(String.format("Total count: [Commits: %d, Errors: %d, Refactorings: %d]",
-							commitsCount, errorCommitsCount, refactoringsCount));
+					//System.out.println(String.format("Total count: [Commits: %d, Errors: %d, Refactorings: %d]",
+					//		commitsCount, errorCommitsCount, refactoringsCount));
 				}
 
 				@Override
@@ -87,6 +79,8 @@ public class RefactoringMiner {
 					e.printStackTrace(System.err);
 				}
 			});
+			endJSON(sb);
+			System.out.println(sb.toString());
 		}
 	}
 
@@ -99,36 +93,25 @@ public class RefactoringMiner {
 		String endCommit = (args.length == 4) ? args[3] : null;
 		GitService gitService = new GitServiceImpl();
 		try (Repository repo = gitService.openRepository(folder)) {
-			Path folderPath = Paths.get(folder);
-			String fileName = null;
-			if (endCommit == null) {
-				fileName = "refactorings_" + startCommit + "_begin" + ".csv";
-			} else {
-				fileName = "refactorings_" + startCommit + "_" + endCommit + ".csv";
-			}
-			String filePath = folderPath.toString() + "/" + fileName;
-			Files.deleteIfExists(Paths.get(filePath));
-			saveToFile(filePath, getResultHeader());
-
+			String gitURL = repo.getConfig().getString("remote", "origin", "url");
 			GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+			StringBuilder sb = new StringBuilder();
+			startJSON(sb);
 			detector.detectBetweenCommits(repo, startCommit, endCommit, new RefactoringHandler() {
+				private int commitCount = 0;
 				@Override
 				public void handle(String commitId, List<Refactoring> refactorings) {
-					if (refactorings.isEmpty()) {
-						System.out.println("No refactorings found in commit " + commitId);
-					} else {
-						System.out.println(refactorings.size() + " refactorings found in commit " + commitId);
-						for (Refactoring ref : refactorings) {
-							saveToFile(filePath, getResultRefactoringDescription(commitId, ref));
-						}
+					if(commitCount > 0) {
+						sb.append(",").append("\n");
 					}
+					commitJSON(sb, gitURL, commitId, refactorings);
+					commitCount++;
 				}
 
 				@Override
 				public void onFinish(int refactoringsCount, int commitsCount, int errorCommitsCount) {
-					System.out.println("Finish mining, result is saved to file: " + filePath);
-					System.out.println(String.format("Total count: [Commits: %d, Errors: %d, Refactorings: %d]",
-							commitsCount, errorCommitsCount, refactoringsCount));
+					//System.out.println(String.format("Total count: [Commits: %d, Errors: %d, Refactorings: %d]",
+					//		commitsCount, errorCommitsCount, refactoringsCount));
 				}
 
 				@Override
@@ -137,6 +120,8 @@ public class RefactoringMiner {
 					e.printStackTrace(System.err);
 				}
 			});
+			endJSON(sb);
+			System.out.println(sb.toString());
 		}
 	}
 
@@ -149,36 +134,25 @@ public class RefactoringMiner {
 		String endTag = (args.length == 4) ? args[3] : null;
 		GitService gitService = new GitServiceImpl();
 		try (Repository repo = gitService.openRepository(folder)) {
-			Path folderPath = Paths.get(folder);
-			String fileName = null;
-			if (endTag == null) {
-				fileName = "refactorings_" + startTag + "_begin" + ".csv";
-			} else {
-				fileName = "refactorings_" + startTag + "_" + endTag + ".csv";
-			}
-			String filePath = folderPath.toString() + "/" + fileName;
-			Files.deleteIfExists(Paths.get(filePath));
-			saveToFile(filePath, getResultHeader());
-
+			String gitURL = repo.getConfig().getString("remote", "origin", "url");
 			GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+			StringBuilder sb = new StringBuilder();
+			startJSON(sb);
 			detector.detectBetweenTags(repo, startTag, endTag, new RefactoringHandler() {
+				private int commitCount = 0;
 				@Override
 				public void handle(String commitId, List<Refactoring> refactorings) {
-					if (refactorings.isEmpty()) {
-						System.out.println("No refactorings found in commit " + commitId);
-					} else {
-						System.out.println(refactorings.size() + " refactorings found in commit " + commitId);
-						for (Refactoring ref : refactorings) {
-							saveToFile(filePath, getResultRefactoringDescription(commitId, ref));
-						}
+					if(commitCount > 0) {
+						sb.append(",").append("\n");
 					}
+					commitJSON(sb, gitURL, commitId, refactorings);
+					commitCount++;
 				}
 
 				@Override
 				public void onFinish(int refactoringsCount, int commitsCount, int errorCommitsCount) {
-					System.out.println("Finish mining, result is saved to file: " + filePath);
-					System.out.println(String.format("Total count: [Commits: %d, Errors: %d, Refactorings: %d]",
-							commitsCount, errorCommitsCount, refactoringsCount));
+					//System.out.println(String.format("Total count: [Commits: %d, Errors: %d, Refactorings: %d]",
+					//		commitsCount, errorCommitsCount, refactoringsCount));
 				}
 
 				@Override
@@ -187,6 +161,8 @@ public class RefactoringMiner {
 					e.printStackTrace(System.err);
 				}
 			});
+			endJSON(sb);
+			System.out.println(sb.toString());
 		}
 	}
 
@@ -198,18 +174,14 @@ public class RefactoringMiner {
 		String commitId = args[2];
 		GitService gitService = new GitServiceImpl();
 		try (Repository repo = gitService.openRepository(folder)) {
+			String gitURL = repo.getConfig().getString("remote", "origin", "url");
 			GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
-			detector.detectAtCommit(repo, null, commitId, new RefactoringHandler() {
+			StringBuilder sb = new StringBuilder();
+			startJSON(sb);
+			detector.detectAtCommit(repo, commitId, new RefactoringHandler() {
 				@Override
 				public void handle(String commitId, List<Refactoring> refactorings) {
-					if (refactorings.isEmpty()) {
-						System.out.println("No refactorings found in commit " + commitId);
-					} else {
-						System.out.println(refactorings.size() + " refactorings found in commit " + commitId + ": ");
-						for (Refactoring ref : refactorings) {
-							System.out.println("  " + ref);
-						}
-					}
+					commitJSON(sb, gitURL, commitId, refactorings);
 				}
 
 				@Override
@@ -218,7 +190,98 @@ public class RefactoringMiner {
 					e.printStackTrace(System.err);
 				}
 			});
+			endJSON(sb);
+			System.out.println(sb.toString());
 		}
+	}
+
+	private static void detectAtGitHubCommit(String[] args) throws Exception {
+		if (args.length != 4) {
+			throw argumentException();
+		}
+		String gitURL = args[1];
+		String commitId = args[2];
+		int timeout = Integer.parseInt(args[3]);
+		GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+		StringBuilder sb = new StringBuilder();
+		startJSON(sb);
+		detector.detectAtCommit(gitURL, commitId, new RefactoringHandler() {
+			@Override
+			public void handle(String commitId, List<Refactoring> refactorings) {
+				commitJSON(sb, gitURL, commitId, refactorings);
+			}
+
+			@Override
+			public void handleException(String commit, Exception e) {
+				System.err.println("Error processing commit " + commit);
+				e.printStackTrace(System.err);
+			}
+		}, timeout);
+		endJSON(sb);
+		System.out.println(sb.toString());
+	}
+
+	private static void detectAtGitHubPullRequest(String[] args) throws Exception {
+		if (args.length != 4) {
+			throw argumentException();
+		}
+		String gitURL = args[1];
+		int pullId = Integer.parseInt(args[2]);
+		int timeout = Integer.parseInt(args[3]);
+		GitHistoryRefactoringMiner detector = new GitHistoryRefactoringMinerImpl();
+		StringBuilder sb = new StringBuilder();
+		startJSON(sb);
+		detector.detectAtPullRequest(gitURL, pullId, new RefactoringHandler() {
+			private int commitCount = 0;
+			@Override
+			public void handle(String commitId, List<Refactoring> refactorings) {
+				if(commitCount > 0) {
+					sb.append(",").append("\n");
+				}
+				commitJSON(sb, gitURL, commitId, refactorings);
+				commitCount++;
+			}
+
+			@Override
+			public void handleException(String commit, Exception e) {
+				System.err.println("Error processing commit " + commit);
+				e.printStackTrace(System.err);
+			}
+		}, timeout);
+		endJSON(sb);
+		System.out.println(sb.toString());
+	}
+
+	private static void commitJSON(StringBuilder sb, String cloneURL, String currentCommitId, List<Refactoring> refactoringsAtRevision) {
+		sb.append("{").append("\n");
+		sb.append("\t").append("\"").append("repository").append("\"").append(": ").append("\"").append(cloneURL).append("\"").append(",").append("\n");
+		sb.append("\t").append("\"").append("sha1").append("\"").append(": ").append("\"").append(currentCommitId).append("\"").append(",").append("\n");
+		String url = "https://github.com/" + cloneURL.substring(19, cloneURL.indexOf(".git")) + "/commit/" + currentCommitId;
+		sb.append("\t").append("\"").append("url").append("\"").append(": ").append("\"").append(url).append("\"").append(",").append("\n");
+		sb.append("\t").append("\"").append("refactorings").append("\"").append(": ");
+		sb.append("[");
+		int counter = 0;
+		for(Refactoring refactoring : refactoringsAtRevision) {
+			sb.append(refactoring.toJSON());
+			if(counter < refactoringsAtRevision.size()-1) {
+				sb.append(",");
+			}
+			sb.append("\n");
+			counter++;
+		}
+		sb.append("]").append("\n");
+		sb.append("}");
+	}
+
+	private static void startJSON(StringBuilder sb) {
+		sb.append("{").append("\n");
+		sb.append("\"").append("commits").append("\"").append(": ");
+		sb.append("[").append("\n");
+	}
+
+	private static void endJSON(StringBuilder sb) {
+		sb.append("]").append("\n");
+		sb.append("}");
 	}
 
 	private static void printTips() {
@@ -226,39 +289,18 @@ public class RefactoringMiner {
 		System.out.println(
 				"-a <git-repo-folder> <branch>\t\t\t\t\tDetect all refactorings at <branch> for <git-repo-folder>. If <branch> is not specified, commits from all branches are analyzed.");
 		System.out.println(
-				"-bc <git-repo-folder> <start-commit-sha1> <end-commit-sha1>\tDetect refactorings Between <star-commit-sha1> and <end-commit-sha1> for project <git-repo-folder>");
+				"-bc <git-repo-folder> <start-commit-sha1> <end-commit-sha1>\tDetect refactorings Between <start-commit-sha1> and <end-commit-sha1> for project <git-repo-folder>");
 		System.out.println(
 				"-bt <git-repo-folder> <start-tag> <end-tag>\t\t\tDetect refactorings Between <start-tag> and <end-tag> for project <git-repo-folder>");
 		System.out.println(
 				"-c <git-repo-folder> <commit-sha1>\t\t\t\tDetect refactorings at specified commit <commit-sha1> for project <git-repo-folder>");
+		System.out.println(
+				"-gc <git-URL> <commit-sha1> <timeout>\t\t\t\tDetect refactorings at specified commit <commit-sha1> for project <git-URL> within the given <timeout> in seconds. All required information is obtained directly from GitHub using the OAuth token in github-oauth.properties");
+		System.out.println(
+				"-gp <git-URL> <pull-request> <timeout>\t\t\t\tDetect refactorings at specified pull request <pull-request> for project <git-URL> within the given <timeout> in seconds for each commit in the pull request. All required information is obtained directly from GitHub using the OAuth token in github-oauth.properties");
 	}
 
 	private static IllegalArgumentException argumentException() {
 		return new IllegalArgumentException("Type `RefactoringMiner -h` to show usage.");
 	}
-
-	private static String getResultRefactoringDescription(String commitId, Refactoring ref) {
-		StringBuilder builder = new StringBuilder();
-		builder.append(commitId);
-		builder.append(";");
-		builder.append(ref.getName());
-		builder.append(";");
-		builder.append(ref);
-		return builder.toString();
-	}
-
-	private static void saveToFile(String fileName, String content) {
-		Path path = Paths.get(fileName);
-		byte[] contentBytes = (content + System.lineSeparator()).getBytes();
-		try {
-			Files.write(path, contentBytes, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private static String getResultHeader() {
-		return "CommitId;RefactoringType;RefactoringDetail";
-	}
-
 }

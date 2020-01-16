@@ -1,5 +1,10 @@
 package gr.uom.java.xmi;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+
+import gr.uom.java.xmi.diff.CodeRange;
+
 public class LocationInfo {
 	private String filePath;
 	private int startOffset;
@@ -9,65 +14,29 @@ public class LocationInfo {
 	private int startColumn;
 	private int endLine;
 	private int endColumn;
+	private CodeElementType codeElementType;
 	
-	public LocationInfo(String fileContents, String filePath, int startOffset, int endOffset) {
+	public LocationInfo(CompilationUnit cu, String filePath, ASTNode node, CodeElementType codeElementType) {
 		this.filePath = filePath;
-		this.startOffset = startOffset;
-		this.endOffset = endOffset;
-		this.length = endOffset - startOffset + 1;
-		if (!"".equals(fileContents) && startOffset >= 0 && startOffset <= endOffset && endOffset <= fileContents.length() - 1) {
-			if (startOffset == 0) {
-				this.startLine = 0;
-				this.startColumn = 0;
-			} else {
-				String contentsBeforeStartOffset = fileContents.substring(0, startOffset); // The second parameter is endOffset - 1
-				this.startLine = getNumberOfLines(contentsBeforeStartOffset);
-				this.startColumn = this.startOffset - getNumberOfCharsForLines(contentsBeforeStartOffset, this.startLine);
-			}
-			String contentsBeforeEndOffset = fileContents.substring(0, endOffset);
-			this.endLine = getNumberOfLines(contentsBeforeEndOffset);
-			this.endColumn = endOffset - getNumberOfCharsForLines(contentsBeforeEndOffset, this.endLine);
+		this.codeElementType = codeElementType;
+		this.startOffset = node.getStartPosition();
+		this.length = node.getLength();
+		this.endOffset = startOffset + length;
+		
+		//lines are 1-based
+		this.startLine = cu.getLineNumber(startOffset);
+		this.endLine = cu.getLineNumber(endOffset);
+		//columns are 0-based
+		this.startColumn = cu.getColumnNumber(startOffset);
+		//convert to 1-based
+		if(this.startColumn > 0) {
+			this.startColumn += 1;
 		}
-	}
-
-	private int getNumberOfLines(String string) {
-		int numberOfLines = 0;
-		int stringLength = string.length();
-		for (int i = 0; i < stringLength; i++) {
-			if (string.charAt(i) == '\r') { // Handle CRLF and old UNIX style files, where CR is the only line feed character
-				if (i + 1 <= string.length() - 1 && string.charAt(i + 1) == '\n') {
-					i++; // Skip the next LF for CRLF
-				}
-				numberOfLines++;
-			} else if (string.charAt(i) == '\n') {
-				numberOfLines++;
-			}
+		this.endColumn = cu.getColumnNumber(endOffset);
+		//convert to 1-based
+		if(this.endColumn > 0) {
+			this.endColumn += 1;
 		}
-		return numberOfLines;
-	}
-	
-	/**
-	 * Returns the number of characters in the first n lines of the given string
-	 * @param string
-	 * @param lines
-	 * @return
-	 */
-	private int getNumberOfCharsForLines(String string, int lines) {
-		int charsBeforeLine = 0;
-		int stringLength = string.length();
-		for (int i = 0; i < stringLength && lines > 0; i++) {
-			if (string.charAt(i) == '\r') {
-				if (i + 1 <= string.length() - 1 && string.charAt(i + 1) == '\n') {
-					i++;
-					charsBeforeLine++;
-				}
-				lines--;
-			} else if (string.charAt(i) == '\n') {
-				lines--;
-			}
-			charsBeforeLine++;
-		}
-		return charsBeforeLine;
 	}
 
 	public String getFilePath() {
@@ -86,9 +55,6 @@ public class LocationInfo {
 		return length;
 	}
 
-	/**
-	 * @return 0-based start line number
-	 */
 	public int getStartLine() {
 		return startLine;
 	}
@@ -97,14 +63,148 @@ public class LocationInfo {
 		return startColumn;
 	}
 
-	/**
-	 * @return 0-based end line number
-	 */
 	public int getEndLine() {
 		return endLine;
 	}
 
 	public int getEndColumn() {
 		return endColumn;
+	}
+
+	public CodeElementType getCodeElementType() {
+		return codeElementType;
+	}
+
+	public CodeRange codeRange() {
+		return new CodeRange(getFilePath(),
+				getStartLine(), getEndLine(),
+				getStartColumn(), getEndColumn(), getCodeElementType());
+	}
+
+	public boolean subsumes(LocationInfo other) {
+		return this.filePath.equals(other.filePath) &&
+				this.startOffset <= other.startOffset &&
+				this.endOffset >= other.endOffset;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + endColumn;
+		result = prime * result + endLine;
+		result = prime * result + endOffset;
+		result = prime * result + ((filePath == null) ? 0 : filePath.hashCode());
+		result = prime * result + length;
+		result = prime * result + startColumn;
+		result = prime * result + startLine;
+		result = prime * result + startOffset;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LocationInfo other = (LocationInfo) obj;
+		if (endColumn != other.endColumn)
+			return false;
+		if (endLine != other.endLine)
+			return false;
+		if (endOffset != other.endOffset)
+			return false;
+		if (filePath == null) {
+			if (other.filePath != null)
+				return false;
+		} else if (!filePath.equals(other.filePath))
+			return false;
+		if (length != other.length)
+			return false;
+		if (startColumn != other.startColumn)
+			return false;
+		if (startLine != other.startLine)
+			return false;
+		if (startOffset != other.startOffset)
+			return false;
+		return true;
+	}
+	
+	public enum CodeElementType {
+		TYPE_DECLARATION,
+		METHOD_DECLARATION,
+		FIELD_DECLARATION,
+		SINGLE_VARIABLE_DECLARATION,
+		VARIABLE_DECLARATION_STATEMENT,
+		VARIABLE_DECLARATION_EXPRESSION,
+		VARIABLE_DECLARATION_INITIALIZER,
+		ANONYMOUS_CLASS_DECLARATION,
+		LAMBDA_EXPRESSION,
+		LAMBDA_EXPRESSION_BODY,
+		CLASS_INSTANCE_CREATION,
+		ARRAY_CREATION,
+		METHOD_INVOCATION,
+		SUPER_METHOD_INVOCATION,
+		TERNARY_OPERATOR_CONDITION,
+		TERNARY_OPERATOR_THEN_EXPRESSION,
+		TERNARY_OPERATOR_ELSE_EXPRESSION,
+		LABELED_STATEMENT,
+		FOR_STATEMENT("for"),
+		FOR_STATEMENT_CONDITION,
+		FOR_STATEMENT_INITIALIZER,
+		FOR_STATEMENT_UPDATER,
+		ENHANCED_FOR_STATEMENT("for"),
+		ENHANCED_FOR_STATEMENT_PARAMETER_NAME,
+		ENHANCED_FOR_STATEMENT_EXPRESSION,
+		WHILE_STATEMENT("while"),
+		WHILE_STATEMENT_CONDITION,
+		IF_STATEMENT("if"),
+		IF_STATEMENT_CONDITION,
+		DO_STATEMENT("do"),
+		DO_STATEMENT_CONDITION,
+		SWITCH_STATEMENT("switch"),
+		SWITCH_STATEMENT_CONDITION,
+		SYNCHRONIZED_STATEMENT("synchronized"),
+		SYNCHRONIZED_STATEMENT_EXPRESSION,
+		TRY_STATEMENT("try"),
+		TRY_STATEMENT_RESOURCE,
+		CATCH_CLAUSE("catch"),
+		CATCH_CLAUSE_EXCEPTION_NAME,
+		EXPRESSION_STATEMENT,
+		SWITCH_CASE,
+		ASSERT_STATEMENT,
+		RETURN_STATEMENT,
+		THROW_STATEMENT,
+		CONSTRUCTOR_INVOCATION,
+		SUPER_CONSTRUCTOR_INVOCATION,
+		BREAK_STATEMENT,
+		CONTINUE_STATEMENT,
+		EMPTY_STATEMENT,
+		BLOCK("{"),
+		FINALLY_BLOCK("finally"),
+		TYPE,
+		LIST_OF_STATEMENTS;
+		
+		private String name;
+		
+		private CodeElementType() {
+			
+		}
+		
+		private CodeElementType(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+		
+		public CodeElementType setName(String name) {
+			this.name = name;
+			return this;
+		}
 	}
 }
