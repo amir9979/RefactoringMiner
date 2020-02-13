@@ -258,7 +258,7 @@ public class GitHistoryRefactoringMinerImpl implements GitHistoryRefactoringMine
 		return refactoringsAtRevision;
 	}
 
-	private Set<String> repositoryDirectories(File folder) {
+	public Set<String> repositoryDirectories(File folder) {
 		final String systemFileSeparator = Matcher.quoteReplacement(File.separator);
 		Set<String> repositoryDirectories = new LinkedHashSet<String>();
 		Collection<File> files = FileUtils.listFiles(folder, null, true);

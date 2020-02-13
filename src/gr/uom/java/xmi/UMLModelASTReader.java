@@ -100,7 +100,7 @@ public class UMLModelASTReader {
 	}
 
 	private static ASTParser buildAstParser(File srcFolder) {
-		ASTParser parser = ASTParser.newParser(AST.JLS11);
+		ASTParser parser = ASTParser.newParser(8);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		Map<String, String> options = JavaCore.getOptions();
 		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
