@@ -30,6 +30,16 @@ public class RenameClassRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	@Override
+	public String getProcessedClassName() {
+		return originalClass.getName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return originalClass.getLocationInfo().getFilePath();
+	}
+
 	public String getName() {
 		return this.getRefactoringType().getDisplayName();
 	}

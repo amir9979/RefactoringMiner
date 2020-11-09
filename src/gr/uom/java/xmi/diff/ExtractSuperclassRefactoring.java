@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.refactoringminer.api.Refactoring;
@@ -27,6 +28,24 @@ public class ExtractSuperclassRefactoring implements Refactoring {
 		sb.append(" from classes ");
 		sb.append(subclassSet);
 		return sb.toString();
+	}
+
+	@Override
+	public String getProcessedClassName() {
+		StringJoiner joiner = new StringJoiner(",");
+		for(UMLClass umlClass : this.subclassSet) {
+			joiner.add(umlClass.getName());
+		}
+		return joiner.toString();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		StringJoiner joiner = new StringJoiner(",");
+		for(UMLClass umlClass : this.subclassSet) {
+			joiner.add(umlClass.getSourceFile());
+		}
+		return joiner.toString();
 	}
 
 	public String getName() {

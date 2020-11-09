@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.refactoringminer.api.Refactoring;
@@ -36,6 +37,16 @@ public class ExtractClassRefactoring implements Refactoring {
 		sb.append(" from class ");
 		sb.append(classDiff.getOriginalClass());
 		return sb.toString();
+	}
+
+	@Override
+	public String getProcessedClassName() {
+		return originalClass.getName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return originalClass.getLocationInfo().getFilePath();
 	}
 
 	public RefactoringType getRefactoringType() {

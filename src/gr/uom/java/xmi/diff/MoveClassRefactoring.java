@@ -30,6 +30,16 @@ public class MoveClassRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	@Override
+	public String getProcessedClassName() {
+		return originalClass.getName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return originalClass.getLocationInfo().getFilePath();
+	}
+
 	public RenamePattern getRenamePattern() {
 		int separatorPos = PrefixSuffixUtils.separatorPosOfCommonSuffix('.', originalClass.getName(), movedClass.getName());
 		if (separatorPos == -1) {

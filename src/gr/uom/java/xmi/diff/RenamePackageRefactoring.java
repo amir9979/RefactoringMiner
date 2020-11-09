@@ -56,6 +56,16 @@ public class RenamePackageRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	@Override
+	public String getProcessedClassName() {
+		return "N/A";
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return pattern.getBefore().endsWith(".") ? pattern.getBefore().substring(0, pattern.getBefore().length() - 1) : pattern.getBefore();
+	}
+
 	public Set<ImmutablePair<String, String>> getInvolvedClassesBeforeRefactoring() {
 		Set<ImmutablePair<String, String>> pairs = new LinkedHashSet<ImmutablePair<String, String>>();
 		for(MoveClassRefactoring ref : moveClassRefactorings) {
