@@ -42,6 +42,16 @@ public class RenameOperationRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
+	@Override
+	public String getProcessedClassName() {
+		return getClassName();
+	}
+
+	@Override
+	public String getProcessedFilePath() {
+		return originalOperation.getLocationInfo().getFilePath();
+	}
+
 	private String getClassName() {
 		String sourceClassName = originalOperation.getClassName();
 		String targetClassName = renamedOperation.getClassName();
