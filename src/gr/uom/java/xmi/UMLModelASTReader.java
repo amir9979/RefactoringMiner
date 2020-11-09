@@ -139,7 +139,7 @@ public class UMLModelASTReader {
 	}
 
 	private static ASTParser buildAstParser(File srcFolder) {
-		ASTParser parser = ASTParser.newParser(AST.JLS14);
+		ASTParser parser = ASTParser.newParser(8);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		Map<String, String> options = JavaCore.getOptions();
 		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
@@ -209,7 +209,7 @@ public class UMLModelASTReader {
 		umlClass.setJavadoc(javadoc);
 		
 		umlClass.setEnum(true);
-		
+
 		List<Type> superInterfaceTypes = enumDeclaration.superInterfaceTypes();
     	for(Type interfaceType : superInterfaceTypes) {
     		UMLType umlType = UMLType.extractTypeObject(cu, sourceFile, interfaceType, 0);
@@ -217,12 +217,12 @@ public class UMLModelASTReader {
     		umlClass.addImplementedInterface(umlType);
     		getUmlModel().addRealization(umlRealization);
     	}
-    	
+
     	List<EnumConstantDeclaration> enumConstantDeclarations = enumDeclaration.enumConstants();
     	for(EnumConstantDeclaration enumConstantDeclaration : enumConstantDeclarations) {
 			processEnumConstantDeclaration(cu, enumConstantDeclaration, sourceFile, umlClass);
 		}
-		
+
 		processModifiers(cu, sourceFile, enumDeclaration, umlClass);
 		
 		processBodyDeclarations(cu, enumDeclaration, packageName, sourceFile, importedTypes, umlClass);
@@ -396,7 +396,7 @@ public class UMLModelASTReader {
     		umlClass.setVisibility("private");
     	else
     		umlClass.setVisibility("package");
-    	
+
     	List<IExtendedModifier> extendedModifiers = typeDeclaration.modifiers();
 		for(IExtendedModifier extendedModifier : extendedModifiers) {
 			if(extendedModifier.isAnnotation()) {
