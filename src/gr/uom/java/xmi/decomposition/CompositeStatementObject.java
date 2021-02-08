@@ -89,7 +89,12 @@ public class CompositeStatementObject extends AbstractStatement {
         return false;
     }
 
-    public String toString() {
+    public void resetArgumentization() {
+		super.resetArgumentization();
+		for(AbstractExpression expression : expressionList) {
+			expression.resetArgumentization();
+		}
+	}public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(locationInfo.getCodeElementType().getName());
         if (expressionList.size() > 0) {
@@ -543,6 +548,9 @@ public class CompositeStatementObject extends AbstractStatement {
 		stringRepresentation.add(this.toString());
 		for(AbstractStatement statement : statementList) {
 			stringRepresentation.addAll(statement.stringRepresentation());
+		}
+		if(getLocationInfo().getCodeElementType().equals(CodeElementType.BLOCK)) {
+			stringRepresentation.add("}");
 		}
 		return stringRepresentation;
 	}

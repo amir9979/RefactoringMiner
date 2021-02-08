@@ -1,10 +1,12 @@
 package gr.uom.java.xmi;
 
+import gr.uom.java.xmi.decomposition.AnonymousClassDeclarationObject;
 import gr.uom.java.xmi.decomposition.VariableDeclaration;
 import gr.uom.java.xmi.diff.CodeRange;
 import gr.uom.java.xmi.diff.StringDistance;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UMLAttribute implements Comparable<UMLAttribute>, Serializable, LocationInfoProvider, VariableDeclarationProvider {
@@ -16,12 +18,16 @@ public class UMLAttribute implements Comparable<UMLAttribute>, Serializable, Loc
 	private boolean isFinal;
 	private boolean isStatic;
 	private VariableDeclaration variableDeclaration;
+	private List<UMLAnonymousClass> anonymousClassList;
 	private UMLJavadoc javadoc;
+	private List<UMLComment> comments;
 
 	public UMLAttribute(String name, UMLType type, LocationInfo locationInfo) {
 		this.locationInfo = locationInfo;
 		this.name = name;
 		this.type = type;
+		this.anonymousClassList = new ArrayList<UMLAnonymousClass>();
+		this.comments = new ArrayList<UMLComment>();
 	}
 
 	public LocationInfo getLocationInfo() {
@@ -34,6 +40,23 @@ public class UMLAttribute implements Comparable<UMLAttribute>, Serializable, Loc
 
 	public void setType(UMLType type) {
 		this.type = type;
+	}
+
+	public void addAnonymousClass(UMLAnonymousClass anonymous) {
+		this.anonymousClassList.add(anonymous);
+	}
+
+	public List<UMLAnonymousClass> getAnonymousClassList() {
+		return anonymousClassList;
+	}
+
+	public UMLAnonymousClass findAnonymousClass(AnonymousClassDeclarationObject anonymousClassDeclaration) {
+		for(UMLAnonymousClass anonymousClass : this.getAnonymousClassList()) {
+			if(anonymousClass.getLocationInfo().equals(anonymousClassDeclaration.getLocationInfo())) {
+				return anonymousClass;
+			}
+		}
+		return null;
 	}
 
 	public String getVisibility() {
@@ -92,15 +115,15 @@ public class UMLAttribute implements Comparable<UMLAttribute>, Serializable, Loc
 		this.javadoc = javadoc;
 	}
 
+	public List<UMLComment> getComments() {
+		return comments;
+	}
+
 	public List<UMLAnnotation> getAnnotations() {
 		return variableDeclaration.getAnnotations();
 	}
 
 	public boolean equalsIgnoringChangedType(UMLAttribute attribute) {
-		if(this.isStatic != attribute.isStatic)
-			return false;
-		if(this.isFinal != attribute.isFinal)
-			return false;
 		if(this.name.equals(attribute.name) && this.type.equals(attribute.type) && this.type.equalsQualified(attribute.type))
 			return true;
 		if(!this.type.equals(attribute.type))

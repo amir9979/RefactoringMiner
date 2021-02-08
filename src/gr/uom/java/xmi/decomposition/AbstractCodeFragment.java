@@ -240,18 +240,30 @@ public abstract class AbstractCodeFragment implements LocationInfoProvider {
         return null;
     }
 
-    private boolean isCastExpressionCoveringEntireFragment(String expression) {
-        String statement = getString();
-        int index = statement.indexOf(expression + ";\n");
-        if (index != -1) {
-            String prefix = statement.substring(0, index);
-            if (prefix.contains("(") && prefix.contains(")")) {
-                String casting = prefix.substring(prefix.indexOf("("), prefix.indexOf(")") + 1);
-				return ("return " + casting + expression + ";\n").equals(statement);
-            }
-        }
-        return false;
-    }
+	private boolean isCastExpressionCoveringEntireFragment(String expression) {
+		String statement = getString();
+		int index = statement.indexOf(expression + ";\n");
+		if(index != -1) {
+			String prefix = statement.substring(0, index);
+			if(prefix.contains("(") && prefix.contains(")")) {
+				int indexOfOpeningParenthesis = prefix.indexOf("(");
+				int indexOfClosingParenthesis = prefix.indexOf(")");
+				boolean openingParenthesisInsideSingleQuotes = ReplacementUtil.isInsideSingleQuotes(prefix, indexOfOpeningParenthesis);
+				boolean closingParenthesisInsideSingleQuotes = ReplacementUtil.isInsideSingleQuotes(prefix, indexOfClosingParenthesis);
+				boolean openingParenthesisInsideDoubleQuotes = ReplacementUtil.isInsideDoubleQuotes(prefix, indexOfOpeningParenthesis);
+				boolean closingParenthesisIndideDoubleQuotes = ReplacementUtil.isInsideDoubleQuotes(prefix, indexOfClosingParenthesis);
+				if(indexOfOpeningParenthesis < indexOfClosingParenthesis &&
+						!openingParenthesisInsideSingleQuotes && !closingParenthesisInsideSingleQuotes &&
+						!openingParenthesisInsideDoubleQuotes && !closingParenthesisIndideDoubleQuotes) {
+					String casting = prefix.substring(indexOfOpeningParenthesis, indexOfClosingParenthesis+1);
+					if(("return " + casting + expression + ";\n").equals(statement)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
 
 	protected boolean containsInitializerOfVariableDeclaration(Set<String> expressions) {
 		List<VariableDeclaration> variableDeclarations = getVariableDeclarations();
