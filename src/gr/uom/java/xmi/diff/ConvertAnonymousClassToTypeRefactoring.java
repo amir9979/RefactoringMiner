@@ -38,14 +38,6 @@ public class ConvertAnonymousClassToTypeRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
-    public String getProcessedFilePath(){
-		return anonymousClass.getSourceFile();
-	}
-
-	public String getProcessedClassName(){
-		return anonymousClass.getName();
-	}
-
 	public String getName() {
 		return this.getRefactoringType().getDisplayName();
 	}

@@ -65,16 +65,6 @@ public class InlineOperationRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
-	@Override
-	public String getProcessedClassName() {
-		return getClassName();
-	}
-
-	@Override
-	public String getProcessedFilePath() {
-		return targetOperationAfterInline.getLocationInfo().getFilePath();
-	}
-
 	private String getClassName() {
 		return targetOperationAfterInline.getClassName();
 	}

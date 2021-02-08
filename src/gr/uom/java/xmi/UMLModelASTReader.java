@@ -220,7 +220,7 @@ public class UMLModelASTReader {
 		umlClass.setJavadoc(javadoc);
 		
 		umlClass.setEnum(true);
-
+		
 		List<Type> superInterfaceTypes = enumDeclaration.superInterfaceTypes();
     	for(Type interfaceType : superInterfaceTypes) {
     		UMLType umlType = UMLType.extractTypeObject(cu, sourceFile, interfaceType, 0);
@@ -228,12 +228,12 @@ public class UMLModelASTReader {
     		umlClass.addImplementedInterface(umlType);
     		getUmlModel().addRealization(umlRealization);
     	}
-
+    	
     	List<EnumConstantDeclaration> enumConstantDeclarations = enumDeclaration.enumConstants();
     	for(EnumConstantDeclaration enumConstantDeclaration : enumConstantDeclarations) {
 			processEnumConstantDeclaration(cu, enumConstantDeclaration, sourceFile, umlClass, comments);
 		}
-
+		
 		processModifiers(cu, sourceFile, enumDeclaration, umlClass);
 		
 		processBodyDeclarations(cu, enumDeclaration, packageName, sourceFile, importedTypes, umlClass, comments);
@@ -435,7 +435,7 @@ public class UMLModelASTReader {
     		umlClass.setVisibility("private");
     	else
     		umlClass.setVisibility("package");
-
+    	
     	List<IExtendedModifier> extendedModifiers = typeDeclaration.modifiers();
 		for(IExtendedModifier extendedModifier : extendedModifiers) {
 			if(extendedModifier.isAnnotation()) {
@@ -452,7 +452,7 @@ public class UMLModelASTReader {
 		UMLOperation umlOperation = new UMLOperation(methodName, locationInfo);
 		umlOperation.setJavadoc(javadoc);
 		distributeComments(comments, locationInfo, umlOperation.getComments());
-
+		
 		if(methodDeclaration.isConstructor())
 			umlOperation.setConstructor(true);
 		
@@ -573,7 +573,7 @@ public class UMLModelASTReader {
 			umlAttribute.setVariableDeclaration(variableDeclaration);
 			umlAttribute.setJavadoc(javadoc);
 			distributeComments(comments, locationInfo, umlAttribute.getComments());
-
+			
 			int fieldModifiers = fieldDeclaration.getModifiers();
 			if((fieldModifiers & Modifier.PUBLIC) != 0)
 				umlAttribute.setVisibility("public");

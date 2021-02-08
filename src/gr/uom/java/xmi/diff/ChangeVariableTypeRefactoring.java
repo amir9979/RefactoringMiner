@@ -83,16 +83,6 @@ public class ChangeVariableTypeRefactoring implements Refactoring {
 	}
 
 	@Override
-	public String getProcessedClassName() {
-		return operationAfter.getClassName();
-	}
-
-	@Override
-	public String getProcessedFilePath() {
-		return operationAfter.getLocationInfo().getFilePath();
-	}
-
-	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

@@ -66,16 +66,6 @@ public class RenameAttributeRefactoring implements Refactoring {
 	}
 
 	@Override
-	public String getProcessedClassName() {
-		return classNameAfter;
-	}
-
-	@Override
-	public String getProcessedFilePath() {
-		return originalAttribute.getLocationInfo().getFilePath();
-	}
-
-	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

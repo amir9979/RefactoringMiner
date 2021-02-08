@@ -74,16 +74,6 @@ public class ExtractOperationRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
-	@Override
-	public String getProcessedClassName() {
-		return getClassName();
-	}
-
-	@Override
-	public String getProcessedFilePath() {
-		return sourceOperationBeforeExtraction.getLocationInfo().getFilePath();
-	}
-
 	private String getClassName() {
 		if(getRefactoringType().equals(RefactoringType.EXTRACT_AND_MOVE_OPERATION)) {
 			return getSourceOperationBeforeExtraction().getClassName();

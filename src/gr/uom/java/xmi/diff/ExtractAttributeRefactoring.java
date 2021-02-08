@@ -55,16 +55,6 @@ public class ExtractAttributeRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
-	@Override
-	public String getProcessedClassName() {
-		return attributeDeclaration.getClassName();
-	}
-
-	@Override
-	public String getProcessedFilePath() {
-		return attributeDeclaration.getLocationInfo().getFilePath();
-	}
-
 	/**
 	 * @return the code range of the extracted variable declaration in the <b>child</b> commit
 	 */

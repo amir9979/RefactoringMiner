@@ -13,7 +13,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -209,27 +220,6 @@ public class GitHistoryRefactoringMinerImpl implements GitHistoryRefactoringMine
 		handler.handle(currentCommitId, refactoringsAtRevision);
 
 		return refactoringsAtRevision;
-	}
-
-	public Set<String> repositoryDirectories(File folder) {
-		final String systemFileSeparator = Matcher.quoteReplacement(File.separator);
-		Set<String> repositoryDirectories = new LinkedHashSet<String>();
-		Collection<File> files = FileUtils.listFiles(folder, null, true);
-		for(File file : files) {
-			String path = file.getPath();
-			String relativePath = path.substring(folder.getPath().length()+1, path.length()).replaceAll(systemFileSeparator, "/");
-			if(relativePath.endsWith(".java")) {
-				String directory = relativePath.substring(0, relativePath.lastIndexOf("/"));
-				repositoryDirectories.add(directory);
-				//include sub-directories
-				String subDirectory = new String(directory);
-				while(subDirectory.contains("/")) {
-					subDirectory = subDirectory.substring(0, subDirectory.lastIndexOf("/"));
-					repositoryDirectories.add(subDirectory);
-				}
-			}
-		}
-		return repositoryDirectories;
 	}
 
 	private void downloadAndExtractZipFile(File projectFolder, String cloneURL, String commitId)

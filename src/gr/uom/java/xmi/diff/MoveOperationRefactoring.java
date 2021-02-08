@@ -45,16 +45,6 @@ public class MoveOperationRefactoring implements Refactoring {
 		return sb.toString();
 	}
 
-	@Override
-	public String getProcessedClassName() {
-		return originalOperation.getClassName();
-	}
-
-	@Override
-	public String getProcessedFilePath() {
-		return originalOperation.getLocationInfo().getFilePath();
-	}
-
 	public String getName() {
 		return this.getRefactoringType().getDisplayName();
 	}

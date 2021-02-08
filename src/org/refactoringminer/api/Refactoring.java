@@ -14,10 +14,6 @@ public interface Refactoring extends Serializable, CodeRangeProvider {
 	public String getName();
 
 	public String toString();
-
-	public String getProcessedClassName();
-
-	public String getProcessedFilePath();
 	
 	/**
 	 * @return a Set of ImmutablePair where left is the file path of a program element, and right is the qualified name of the class containing the program element
