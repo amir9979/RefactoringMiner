@@ -1,5 +1,7 @@
 package org.refactoringminer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.List;
 
 import org.eclipse.jgit.lib.Repository;
@@ -121,7 +123,9 @@ public class RefactoringMiner {
 				}
 			});
 			endJSON(sb);
-			System.out.println(sb.toString());
+			BufferedWriter writer = new BufferedWriter(new FileWriter("out.json"));
+			writer.write(sb.toString());
+			writer.close();
 		}
 	}
 
