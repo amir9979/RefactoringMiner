@@ -29,7 +29,7 @@ public interface Refactoring extends Serializable, CodeRangeProvider {
 		StringBuilder sb = new StringBuilder();
 		JsonStringEncoder encoder = JsonStringEncoder.getInstance();
 		sb.append("{").append("\n");
-		sb.append("\t").append("\"").append("type").append("\"").append(": ").append("\"").append(getName()).append("\"").append(",").append("\n");
+		sb.append("\t").append("\"").append("refactor_type").append("\"").append(": ").append("\"").append(getName()).append("\"").append(",").append("\n");
 		sb.append("\t").append("\"").append("description").append("\"").append(": ").append("\"");
 		encoder.quoteAsString(toString().replace('\t', ' '), sb);
 		sb.append("\"").append(",").append("\n");

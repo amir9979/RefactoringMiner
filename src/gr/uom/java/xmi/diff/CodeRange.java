@@ -109,7 +109,7 @@ public class CodeRange {
 			encoder.quoteAsString(s, sb);
 			return sb.toString();
 		}
-		return s;
+		return "null_element";
 	}
 
 	private void encodeStringProperty(StringBuilder sb, String propertyName, String value, boolean last) {
